@@ -1,0 +1,144 @@
+
+buildscript {
+  ext {
+    kotlinVersion="1.6.20"
+    coroutineVersion="1.6.0"
+    junitVersion="5.8.2"
+    slf4jVersion="1.7.36"
+    fledUtilsVersion="0.1.2"
+    eclipseCollectionsVersion="10.4.0"
+    gdxVersion="1.10.0"
+    ktxVersion="1.10.0-rc1"
+    log4jVersion="2.17.0"
+  }
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+  }
+}
+
+allprojects {
+  apply plugin: 'java-library'
+  apply plugin: 'kotlin'
+  apply plugin: 'idea'
+  compileJava {
+    options.incremental = true
+  }
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
+    maven { url 'https://jitpack.io' }
+  }
+
+  compileJava {
+    options.incremental = true
+  }
+
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+      jvmTarget = "11"
+      freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
+  }
+}
+
+version = new File('version.txt').text
+group = "io.fledware"
+def isSnapshot = version.endsWith("SNAPSHOT")
+
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+dependencies {
+  implementation "io.fledware:fledutils:$fledUtilsVersion"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "org.eclipse.collections:eclipse-collections-api:$eclipseCollectionsVersion"
+  implementation "org.eclipse.collections:eclipse-collections:$eclipseCollectionsVersion"
+
+  testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+  testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion"
+  testImplementation "org.junit.jupiter:junit-jupiter-params:$junitVersion"
+  testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+}
+
+test {
+  useJUnitPlatform()
+  testLogging {
+    showStandardStreams = true
+  }
+  minHeapSize = "512m"
+  maxHeapSize = "2048m"
+}
+
+java {
+  withSourcesJar()
+  withJavadocJar()
+}
+
+artifacts {
+  archives javadocJar, sourcesJar
+}
+
+publishing {
+  repositories {
+    maven {
+      url = isSnapshot ?
+          "https://s01.oss.sonatype.org/content/repositories/snapshots/" :
+          "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+      credentials {
+        username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+        password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+      }
+    }
+  }
+  publications {
+    maven(MavenPublication) {
+      from components.kotlin
+      artifact sourcesJar
+      artifact javadocJar
+      artifactId = "fledecs"
+      pom {
+        name = project.name
+        packaging = "jar"
+        description = "A data sharding ECS framwork"
+        url = "https://github.com/fledware/FledECS/"
+        licenses {
+          license {
+            name = 'The Apache License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+        scm {
+          connection = "scm:git:git@github.com:fledware/fledecs.git"
+          developerConnection = "scm:git:git@github.com:fledware/fledecs.git"
+          url = "https://github.com/fledware/FledECS/"
+        }
+        developers {
+          developer {
+            id = 'rexfleischer'
+            name = 'Rex Fleischer'
+          }
+        }
+      }
+    }
+  }
+}
+
+signing {
+  def signingKey = findProperty("signingKey")
+  def signingPassword = findProperty("signingPassword")
+  useInMemoryPgpKeys(signingKey, signingPassword)
+  required { gradle.taskGraph.hasTask("publish") }
+  sign publishing.publications.maven
+}
