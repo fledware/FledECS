@@ -16,6 +16,7 @@ import driver.util.isKeyJustPressed
 import driver.util.screenMax
 import driver.util.screenMin
 import fledware.ecs.World
+import fledware.ecs.entityComponentIndexOf
 import fledware.ecs.forEach
 import fledware.ecs.forEachWorld
 import fledware.ecs.get
@@ -26,12 +27,9 @@ import ktx.actors.txt
 import ktx.scene2d.actors
 import ktx.scene2d.label
 import ktx.scene2d.table
-import org.slf4j.LoggerFactory
 import kotlin.system.measureTimeMillis
 
 class GameOfLifeScreen : GameScreen() {
-
-  private val logger = LoggerFactory.getLogger(this::class.java)
 
   // we only want to update every couple frames
   private val cellUpdateEvery = 0.25f
@@ -50,6 +48,8 @@ class GameOfLifeScreen : GameScreen() {
   private val cellSizeF = cellSize.toFloat()
   private val absoluteMax = engineInfo.maxCellLocation * cellSize
   private val viewportBounds = Rectangle()
+  private val cellAliveIndex = engine.data.entityComponentIndexOf<CellAlive>()
+  private val cellLocationIndex = engine.data.entityComponentIndexOf<CellLocation>()
 
   // ui stuffs
   private val fpsLabel: Label
@@ -180,8 +180,8 @@ class GameOfLifeScreen : GameScreen() {
     val cells = this.data.entityGroups["cells"] ?: throw IllegalStateException(
         "cells group not found for world $name")
     cells.forEach { entity ->
-      if (!entity.get<CellAlive>().isAlive(isEven)) return@forEach
-      val location = entity.get<CellLocation>()
+      if (!entity[cellAliveIndex].isAlive(isEven)) return@forEach
+      val location = entity[cellLocationIndex]
       shapeRenderer.rect(location.x * cellSizeF, location.y * cellSizeF, cellSizeF, cellSizeF)
     }
   }
@@ -198,7 +198,7 @@ class GameOfLifeScreen : GameScreen() {
     val cells = this.data.entityGroups["cells"] ?: throw IllegalStateException(
         "cells group not found for world $name")
     cells.forEach { entity ->
-      val alive = entity.get<CellAlive>()
+      val alive = entity[cellAliveIndex]
       alive.evenAlive = false
       alive.oddAlive = false
     }
@@ -216,7 +216,7 @@ class GameOfLifeScreen : GameScreen() {
     val cells = this.data.entityGroups["cells"] ?: throw IllegalStateException(
         "cells group not found for world $name")
     cells.forEach { entity ->
-      val alive = entity.get<CellAlive>()
+      val alive = entity[cellAliveIndex]
       alive.evenAlive = MathUtils.randomBoolean()
       alive.oddAlive = MathUtils.randomBoolean()
     }
