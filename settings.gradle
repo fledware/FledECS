@@ -1,0 +1,4 @@
+rootProject.name = 'fledecs'
+include 'benchmark'
+include 'examples:example-runner'
+include 'examples:game-of-life'

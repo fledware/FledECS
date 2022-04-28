@@ -1,0 +1,24 @@
+dependencies {
+  api rootProject
+  api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+  api "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+  api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVersion"
+
+  api "io.fledware:fledutils:$fledUtilsVersion"
+  api "io.github.libktx:ktx-app:$ktxVersion"
+  api "io.github.libktx:ktx-style:$ktxVersion"
+  api "io.github.libktx:ktx-actors:$ktxVersion"
+  api "io.github.libktx:ktx-scene2d:$ktxVersion"
+  api "com.badlogicgames.gdx:gdx:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+  api "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+  api "org.eclipse.collections:eclipse-collections-api:$eclipseCollectionsVersion"
+  api "org.eclipse.collections:eclipse-collections:$eclipseCollectionsVersion"
+
+  api "org.slf4j:slf4j-api:$slf4jVersion"
+  runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
+  runtimeOnly "org.apache.logging.log4j:log4j-api:$log4jVersion"
+  runtimeOnly "org.apache.logging.log4j:log4j-core:$log4jVersion"
+}
