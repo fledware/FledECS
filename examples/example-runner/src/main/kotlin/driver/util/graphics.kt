@@ -4,7 +4,11 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.scenes.scene2d.ui.Label
+import com.badlogic.gdx.scenes.scene2d.ui.Value
 import com.badlogic.gdx.utils.viewport.Viewport
+import ktx.scene2d.KTableWidget
+import ktx.scene2d.label
 import kotlin.math.max
 import kotlin.math.min
 
@@ -43,4 +47,18 @@ fun ShapeRenderer.drawGrid(viewport: Viewport,
     this.line(xMin.toFloat(), y.toFloat(), xMax.toFloat(), y.toFloat())
   }
   this.end()
+}
+
+fun KTableWidget.tinyLabel(text: String = ""): Label {
+  return label(text, "tiny") {
+    it.padTop(Value.percentHeight(0.02f, this@tinyLabel))
+        .padLeft(Value.percentHeight(0.02f, this@tinyLabel))
+        .left()
+  }
+}
+
+fun KTableWidget.tinyLabelAndRow(text: String = ""): Label {
+  val result = tinyLabel(text)
+  row()
+  return result
 }

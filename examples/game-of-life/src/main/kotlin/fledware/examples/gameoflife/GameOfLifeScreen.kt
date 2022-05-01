@@ -8,13 +8,13 @@ import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.Value
 import driver.GameScreen
 import driver.util.MouseInputProcessor
 import driver.util.drawGrid
 import driver.util.isKeyJustPressed
 import driver.util.screenMax
 import driver.util.screenMin
+import driver.util.tinyLabelAndRow
 import fledware.ecs.World
 import fledware.ecs.entityComponentIndexOf
 import fledware.ecs.forEach
@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ktx.actors.txt
 import ktx.scene2d.actors
-import ktx.scene2d.label
 import ktx.scene2d.table
 import kotlin.system.measureTimeMillis
 
@@ -54,6 +53,9 @@ class GameOfLifeScreen : GameScreen() {
   // ui stuffs
   private val fpsLabel: Label
   private val updateLabel: Label
+  private val renderLabel: Label
+  private val pausedLabel: Label
+  private val drawGridLabel: Label
 
   // inputs stuffs
   var zoomSensitivity: Float = 0.1f
@@ -99,17 +101,17 @@ class GameOfLifeScreen : GameScreen() {
         left()
         setFillParent(true)
 
-        fpsLabel = label("fps: ", "tiny", defaultSkin) {
-          it.padTop(Value.percentHeight(0.02f, this@table))
-              .padLeft(Value.percentHeight(0.02f, this@table))
-              .left()
-        }
-        row()
-        updateLabel = label("engine time: ", "tiny", defaultSkin) {
-          it.padTop(Value.percentHeight(0.02f, this@table))
-              .padLeft(Value.percentHeight(0.02f, this@table))
-              .left()
-        }
+        fpsLabel = tinyLabelAndRow("fps: ")
+        updateLabel = tinyLabelAndRow("engine time: ")
+        renderLabel = tinyLabelAndRow("engine render: ")
+        pausedLabel = tinyLabelAndRow("paused (space): $pauseSimulation")
+        drawGridLabel = tinyLabelAndRow("draw grid (G): $drawGrid")
+        tinyLabelAndRow("fill random (F)")
+        tinyLabelAndRow("reset (R)")
+        tinyLabelAndRow("exit (esc)")
+        tinyLabelAndRow("draw (left mouse)")
+        tinyLabelAndRow("move camera (right mouse drag)")
+        tinyLabelAndRow("zoom camera (middle mouse scroll)")
       }
     }
   }
@@ -142,8 +144,14 @@ class GameOfLifeScreen : GameScreen() {
   private fun handleInputs() {
     if (isKeyJustPressed(Keys.R)) resetWorlds()
     if (isKeyJustPressed(Keys.F)) randomizeWorlds()
-    if (isKeyJustPressed(Keys.G)) drawGrid = !drawGrid
-    if (isKeyJustPressed(Keys.SPACE)) pauseSimulation = !pauseSimulation
+    if (isKeyJustPressed(Keys.G)) {
+      drawGrid = !drawGrid
+      drawGridLabel.txt = "draw grid (G): $drawGrid"
+    }
+    if (isKeyJustPressed(Keys.SPACE)) {
+      pauseSimulation = !pauseSimulation
+      pausedLabel.txt = "paused (space): $pauseSimulation"
+    }
     if (isKeyJustPressed(Keys.ESCAPE)) Gdx.app.exit()
   }
 
@@ -167,13 +175,16 @@ class GameOfLifeScreen : GameScreen() {
     val yMax = screenMax(camera.position.y, viewport.worldHeight, camera.zoom, cellSize, absoluteMax).toFloat()
     viewportBounds.set(xMin, yMin, xMax - xMin + cellSize, yMax - yMin + cellSize)
     Gdx.gl.glLineWidth(0.5f)
-    shapeRenderer.color = Color.WHITE
-    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-    engine.data.worlds.values.forEach { world ->
-      val info = world.data.components.get<WorldInfo>()
-      if (viewportBounds.overlaps(info.bounds)) world.render()
+    val time = measureTimeMillis {
+      shapeRenderer.color = Color.WHITE
+      shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+      engine.data.worlds.values.forEach { world ->
+        val info = world.data.components.get<WorldInfo>()
+        if (viewportBounds.overlaps(info.bounds)) world.render()
+      }
+      shapeRenderer.end()
     }
-    shapeRenderer.end()
+    renderLabel.txt = "render time ms: $time"
   }
 
   private fun World.render() {
@@ -226,3 +237,4 @@ class GameOfLifeScreen : GameScreen() {
     viewport.update(width, height)
   }
 }
+
