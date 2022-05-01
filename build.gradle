@@ -58,13 +58,13 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 dependencies {
-  implementation "io.fledware:fledutils:$fledUtilsVersion"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
   implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-
   implementation "org.slf4j:slf4j-api:$slf4jVersion"
-  implementation "org.eclipse.collections:eclipse-collections-api:$eclipseCollectionsVersion"
-  implementation "org.eclipse.collections:eclipse-collections:$eclipseCollectionsVersion"
+
+  api "org.eclipse.collections:eclipse-collections-api:$eclipseCollectionsVersion"
+  api "org.eclipse.collections:eclipse-collections:$eclipseCollectionsVersion"
+  api "io.fledware:fledutils:$fledUtilsVersion"
 
   testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
   testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion"

@@ -3,6 +3,7 @@ package fledware.examples.gameoflife
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Rectangle
@@ -50,10 +51,13 @@ class GameOfLifeScreen : GameScreen() {
   private val viewportBounds = Rectangle()
   private val cellAliveIndex = engine.data.entityComponentIndexOf<CellAlive>()
   private val cellLocationIndex = engine.data.entityComponentIndexOf<CellLocation>()
+  private val pixmap = Pixmap(engineInfo.maxCellLocation, engineInfo.maxCellLocation, Pixmap.Format.RGB565)
 
   // ui stuffs
   private val fpsLabel: Label
   private val updateLabel: Label
+  private val renderLabel: Label
+  private val pausedLabel: Label
 
   // inputs stuffs
   var zoomSensitivity: Float = 0.1f
@@ -110,6 +114,18 @@ class GameOfLifeScreen : GameScreen() {
               .padLeft(Value.percentHeight(0.02f, this@table))
               .left()
         }
+        row()
+        renderLabel = label("engine render: ", "tiny", defaultSkin) {
+          it.padTop(Value.percentHeight(0.02f, this@table))
+              .padLeft(Value.percentHeight(0.02f, this@table))
+              .left()
+        }
+        row()
+        pausedLabel = label("paused (space): $pauseSimulation", "tiny", defaultSkin) {
+          it.padTop(Value.percentHeight(0.02f, this@table))
+              .padLeft(Value.percentHeight(0.02f, this@table))
+              .left()
+        }
       }
     }
   }
@@ -143,7 +159,10 @@ class GameOfLifeScreen : GameScreen() {
     if (isKeyJustPressed(Keys.R)) resetWorlds()
     if (isKeyJustPressed(Keys.F)) randomizeWorlds()
     if (isKeyJustPressed(Keys.G)) drawGrid = !drawGrid
-    if (isKeyJustPressed(Keys.SPACE)) pauseSimulation = !pauseSimulation
+    if (isKeyJustPressed(Keys.SPACE)) {
+      pauseSimulation = !pauseSimulation
+      pausedLabel.txt = "paused (space): $pauseSimulation"
+    }
     if (isKeyJustPressed(Keys.ESCAPE)) Gdx.app.exit()
   }
 
@@ -167,13 +186,16 @@ class GameOfLifeScreen : GameScreen() {
     val yMax = screenMax(camera.position.y, viewport.worldHeight, camera.zoom, cellSize, absoluteMax).toFloat()
     viewportBounds.set(xMin, yMin, xMax - xMin + cellSize, yMax - yMin + cellSize)
     Gdx.gl.glLineWidth(0.5f)
-    shapeRenderer.color = Color.WHITE
-    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-    engine.data.worlds.values.forEach { world ->
-      val info = world.data.components.get<WorldInfo>()
-      if (viewportBounds.overlaps(info.bounds)) world.render()
+    val time = measureTimeMillis {
+      shapeRenderer.color = Color.WHITE
+      shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+      engine.data.worlds.values.forEach { world ->
+        val info = world.data.components.get<WorldInfo>()
+        if (viewportBounds.overlaps(info.bounds)) world.render()
+      }
+      shapeRenderer.end()
     }
-    shapeRenderer.end()
+    renderLabel.txt = "render time ms: $time"
   }
 
   private fun World.render() {
