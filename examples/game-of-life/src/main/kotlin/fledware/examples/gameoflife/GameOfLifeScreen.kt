@@ -3,19 +3,18 @@ package fledware.examples.gameoflife
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.Value
 import driver.GameScreen
 import driver.util.MouseInputProcessor
 import driver.util.drawGrid
 import driver.util.isKeyJustPressed
 import driver.util.screenMax
 import driver.util.screenMin
+import driver.util.tinyLabelAndRow
 import fledware.ecs.World
 import fledware.ecs.entityComponentIndexOf
 import fledware.ecs.forEach
@@ -26,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ktx.actors.txt
 import ktx.scene2d.actors
-import ktx.scene2d.label
 import ktx.scene2d.table
 import kotlin.system.measureTimeMillis
 
@@ -51,13 +49,13 @@ class GameOfLifeScreen : GameScreen() {
   private val viewportBounds = Rectangle()
   private val cellAliveIndex = engine.data.entityComponentIndexOf<CellAlive>()
   private val cellLocationIndex = engine.data.entityComponentIndexOf<CellLocation>()
-  private val pixmap = Pixmap(engineInfo.maxCellLocation, engineInfo.maxCellLocation, Pixmap.Format.RGB565)
 
   // ui stuffs
   private val fpsLabel: Label
   private val updateLabel: Label
   private val renderLabel: Label
   private val pausedLabel: Label
+  private val drawGridLabel: Label
 
   // inputs stuffs
   var zoomSensitivity: Float = 0.1f
@@ -103,29 +101,17 @@ class GameOfLifeScreen : GameScreen() {
         left()
         setFillParent(true)
 
-        fpsLabel = label("fps: ", "tiny", defaultSkin) {
-          it.padTop(Value.percentHeight(0.02f, this@table))
-              .padLeft(Value.percentHeight(0.02f, this@table))
-              .left()
-        }
-        row()
-        updateLabel = label("engine time: ", "tiny", defaultSkin) {
-          it.padTop(Value.percentHeight(0.02f, this@table))
-              .padLeft(Value.percentHeight(0.02f, this@table))
-              .left()
-        }
-        row()
-        renderLabel = label("engine render: ", "tiny", defaultSkin) {
-          it.padTop(Value.percentHeight(0.02f, this@table))
-              .padLeft(Value.percentHeight(0.02f, this@table))
-              .left()
-        }
-        row()
-        pausedLabel = label("paused (space): $pauseSimulation", "tiny", defaultSkin) {
-          it.padTop(Value.percentHeight(0.02f, this@table))
-              .padLeft(Value.percentHeight(0.02f, this@table))
-              .left()
-        }
+        fpsLabel = tinyLabelAndRow("fps: ")
+        updateLabel = tinyLabelAndRow("engine time: ")
+        renderLabel = tinyLabelAndRow("engine render: ")
+        pausedLabel = tinyLabelAndRow("paused (space): $pauseSimulation")
+        drawGridLabel = tinyLabelAndRow("draw grid (G): $drawGrid")
+        tinyLabelAndRow("fill random (F)")
+        tinyLabelAndRow("reset (R)")
+        tinyLabelAndRow("exit (esc)")
+        tinyLabelAndRow("draw (left mouse)")
+        tinyLabelAndRow("move camera (right mouse drag)")
+        tinyLabelAndRow("zoom camera (middle mouse scroll)")
       }
     }
   }
@@ -158,7 +144,10 @@ class GameOfLifeScreen : GameScreen() {
   private fun handleInputs() {
     if (isKeyJustPressed(Keys.R)) resetWorlds()
     if (isKeyJustPressed(Keys.F)) randomizeWorlds()
-    if (isKeyJustPressed(Keys.G)) drawGrid = !drawGrid
+    if (isKeyJustPressed(Keys.G)) {
+      drawGrid = !drawGrid
+      drawGridLabel.txt = "draw grid (G): $drawGrid"
+    }
     if (isKeyJustPressed(Keys.SPACE)) {
       pauseSimulation = !pauseSimulation
       pausedLabel.txt = "paused (space): $pauseSimulation"
@@ -248,3 +237,4 @@ class GameOfLifeScreen : GameScreen() {
     viewport.update(width, height)
   }
 }
+

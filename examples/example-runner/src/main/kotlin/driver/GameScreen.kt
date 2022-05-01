@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.utils.viewport.ExtendViewport
+import ktx.scene2d.Scene2DSkin
 import ktx.style.label
 import ktx.style.skin
 
@@ -58,5 +59,7 @@ abstract class GameScreen : ScreenAdapter() {
       font = fontTiny
       fontColor = Color.WHITE
     }
+  }.also {
+    Scene2DSkin.defaultSkin = it
   }
 }
