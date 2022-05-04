@@ -31,7 +31,7 @@ import kotlin.system.measureTimeMillis
 class GameOfLifeScreen : GameScreen() {
 
   // we only want to update every couple frames
-  private val cellUpdateEvery = 0.25f
+  private val cellUpdateEvery = 0.1f
   private var nextUpdate: Float = cellUpdateEvery
   private var pauseSimulation = false
 
