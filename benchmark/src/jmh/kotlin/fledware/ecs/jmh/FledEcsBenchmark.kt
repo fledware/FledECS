@@ -11,7 +11,7 @@ import fledware.ecs.benchmark.FledStateSystem
 import fledware.ecs.benchmark.stdWorldEntity
 import fledware.ecs.createWorldAndFlush
 import fledware.ecs.impl.DefaultEngine
-import fledware.ecs.update.MainThreadUpdateStrategy
+import fledware.ecs.impl.mainThreadUpdateStrategy
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.Setup
@@ -24,7 +24,8 @@ open class FledEcsBenchmark : AbstractBenchmark() {
 
   @Setup
   open fun init() {
-    engine = DefaultEngine(MainThreadUpdateStrategy())
+    engine = DefaultEngine(mainThreadUpdateStrategy())
+    engine.start()
     val world = engine.createWorldAndFlush("main") {
       addSystem(FledMovementSystem())
       addSystem(FledStateSystem())

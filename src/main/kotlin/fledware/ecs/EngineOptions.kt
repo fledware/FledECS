@@ -8,5 +8,13 @@ data class EngineOptions(
     /**
      * Add checks to events to ensure ownership of entities.
      */
-    val paranoidWorldEvents: Boolean = true
+    val paranoidWorldEvents: Boolean = true,
+    /**
+     *
+     */
+    val defaultUpdateGroupName: String = "default",
+    /**
+     *
+     */
+    val defaultUpdateGroupOrder: Int = 0
 )

@@ -11,14 +11,12 @@ import fledware.ecs.benchmark.FledStateSystem
 import fledware.ecs.benchmark.stdWorldEntity
 import fledware.ecs.createWorldAndFlush
 import fledware.ecs.impl.DefaultEngine
-import fledware.ecs.update.AtomicWorldUpdateStrategy
-import fledware.ecs.update.BurstCyclicalJobExecutorPool
+import fledware.ecs.impl.executorUpdateStrategy
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
-import java.util.concurrent.Executors
 import kotlin.math.max
 
 @State(Scope.Benchmark)
@@ -27,8 +25,8 @@ open class FledEcsExecutorBenchmark : AbstractBenchmark() {
 
   @Setup
   open fun init() {
-    val pool = BurstCyclicalJobExecutorPool(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()), true)
-    engine = DefaultEngine(AtomicWorldUpdateStrategy(pool))
+    engine = DefaultEngine(executorUpdateStrategy())
+    engine.start()
     val worldCount = max(Runtime.getRuntime().availableProcessors(), entityCount / 1024)
     val worldEntityCount = entityCount / worldCount
     (0 until worldCount).forEach { worldIndex ->

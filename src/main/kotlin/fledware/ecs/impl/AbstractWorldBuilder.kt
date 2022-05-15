@@ -9,10 +9,11 @@ import fledware.utilities.DefaultTypedMap
 import fledware.utilities.MutableTypedMap
 
 
-abstract class AbstractWorldBuilder(override val engine: Engine,
+abstract class AbstractWorldBuilder(final override val engine: Engine,
                                     override var name: String,
                                     override var options: Any?)
   : WorldBuilder {
+  override var updateGroup: String = engine.options.defaultUpdateGroupName
   override val systems = mutableListOf<System>()
   override val entities = mutableListOf<Entity>()
   override val entitiesNamed = mutableMapOf<String, Entity>()

@@ -39,6 +39,7 @@ import kotlin.reflect.KClass
  */
 class DefaultWorld(override val engine: Engine,
                    override val name: String,
+                   override val updateGroup: String,
                    override val options: Any?)
   : WorldManaged {
   companion object {
@@ -46,6 +47,8 @@ class DefaultWorld(override val engine: Engine,
   }
 
   private val entitiesToReceive = ConcurrentLinkedQueue<Entity>()
+
+  private val messagesToReceive = ConcurrentLinkedQueue<Any>()
 
   override val events = DefaultWorldEvents()
 
@@ -184,7 +187,7 @@ class DefaultWorld(override val engine: Engine,
   override fun preUpdate() {
     updating.set(true)
     handleSystemUpdates()
-    handleEntitiesReceived()
+    handlerExternalMessages()
   }
 
   override fun update(delta: Float) {
@@ -216,7 +219,7 @@ class DefaultWorld(override val engine: Engine,
 
   override fun onCreate() {
     handleSystemUpdates()
-    handleEntitiesReceived()
+    handlerExternalMessages()
     events.fireAllEvents()
   }
 
@@ -241,14 +244,18 @@ class DefaultWorld(override val engine: Engine,
   // ================================================================
 
   override fun receiveMessage(message: Any) {
-    events.onMessage(message)
+    messagesToReceive.add(message)
   }
 
   override fun receiveEntity(entity: Entity) {
     entitiesToReceive.add(entity)
   }
 
-  private fun handleEntitiesReceived() {
+  private fun handlerExternalMessages() {
+    while (true) {
+      val entity = messagesToReceive.poll() ?: break
+      events.onMessage(entity)
+    }
     while (true) {
       val entity = entitiesToReceive.poll() ?: break
       entityReceive(entity)

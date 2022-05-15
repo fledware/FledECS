@@ -13,7 +13,8 @@ import fledware.ecs.Engine
 import fledware.ecs.ex.withEntityFlags
 import fledware.ecs.ex.withWorldScenes
 import fledware.ecs.impl.DefaultEngine
-import fledware.ecs.update.AtomicWorldUpdateStrategy
+import fledware.ecs.impl.DefaultWorldUpdateStrategy
+import fledware.ecs.impl.executorUpdateStrategy
 import org.slf4j.LoggerFactory
 
 val runner: LibgdxRunner
@@ -46,7 +47,7 @@ open class LibgdxRunner(val builder: LibgdxRunner.() -> Screen) : Game() {
     spriteBatch = SpriteBatch()
     shapeRenderer = ShapeRenderer()
     assetManager = AssetManager()
-    engine = DefaultEngine(updateStrategy = AtomicWorldUpdateStrategy())
+    engine = DefaultEngine(executorUpdateStrategy())
         .withEntityFlags()
         .withWorldScenes()
     engine.start()

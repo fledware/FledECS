@@ -4,7 +4,6 @@ import fledware.ecs.ex.BlockExecutingSystem
 import fledware.ecs.ex.createCachedEntity
 import fledware.ecs.ex.sceneName
 import fledware.ecs.impl.DefaultEngine
-import fledware.ecs.update.MainThreadUpdateStrategy
 
 data class Placement(var x: Int, var y: Int, var size: Int)
 
@@ -111,4 +110,4 @@ fun Engine.createEmptySceneWorld(name: String = "test"): World {
   return createWorldAndFlush(name, null, WorldBuilder::worldBuilderEmptyScene)
 }
 
-fun createTestEngine() = DefaultEngine(MainThreadUpdateStrategy()).also { it.start() }
+fun createTestEngine() = DefaultEngine().also { it.start() }
