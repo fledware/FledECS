@@ -1,4 +1,4 @@
-package fledware.ecs.update
+package fledware.ecs.impl
 
 import fledware.ecs.Entity
 import fledware.ecs.EntityGroupManaged

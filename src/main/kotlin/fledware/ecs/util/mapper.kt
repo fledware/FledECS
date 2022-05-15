@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 // The three classes in this file work together to make objects in an array
 // very quickly accessible. This is the main algorithm used for accessing
 // data across an entire system without knowing what those concrete
-// types are before-hand.
+// types are beforehand.
 //
 // The classes here are generally hidden behind even more convenience
 // methods, but are left open because they have turned out to be helpful
@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap
 //
 // The [MapperIndex] is a convenience class that can be used to
 // quickly access actual data on an array of unknown types. A [MapperIndex]
-// is generally created by the [Mapper], and ensures the index is the
-// same for each time the same key is handed in.
+// is created by the [Mapper], and ensures the index is the same for each
+// time the same key is handed in.
 //
 // The [MapperList] holds the actual data and has many ways of accessing
 // the list. Using a [MapperIndex] will have the fastest way to access
@@ -79,9 +79,8 @@ class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
   // Kind of a hack, but this will allow updates to propagate
   // automatically without more object allocation. Only one listener
   // at a time and intended only for use internally.
-  var onUpdateObject: Any? = null
-  var onUpdate: ((Any?) -> Unit)? = null
-  fun fireOnUpdate() = onUpdate?.invoke(onUpdateObject)
+  var onUpdate: (() -> Unit)? = null
+  fun fireOnUpdate() = onUpdate?.invoke()
 
   fun clear() {
     for (i in data.indices) {

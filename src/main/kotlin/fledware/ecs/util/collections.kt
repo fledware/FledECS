@@ -33,6 +33,10 @@ class UniqueList<T : Any> {
 
   val indices get() = list.indices
 
+  fun isEmpty() = list.isEmpty()
+
+  fun isNotEmpty() = list.isNotEmpty()
+
   operator fun get(index: Int) = list[index]
 
   operator fun plusAssign(element: T) = Unit.also { add(element) }
@@ -55,6 +59,12 @@ class UniqueList<T : Any> {
       return true
     }
     return false
+  }
+
+  fun removeLast(): T {
+    val result = list.removeLast()
+    set -= result
+    return result
   }
 
   fun clear() {

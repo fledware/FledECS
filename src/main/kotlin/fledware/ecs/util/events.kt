@@ -19,6 +19,7 @@ class ImmediateEventListeners0 : EventListeners0 {
   override operator fun plusAssign(listener: () -> Unit) = exec { listeners.add(listener) }
   override operator fun minusAssign(listener: () -> Unit) = exec { listeners.remove(listener) }
   operator fun invoke() = exec { listeners.forEach { it() } }
+  fun clear() = exec { listeners.clear() }
 }
 
 class BufferedEventListeners0 : EventListeners0 {
@@ -29,6 +30,7 @@ class BufferedEventListeners0 : EventListeners0 {
   override operator fun plusAssign(listener: () -> Unit) = exec { listeners.add(listener) }
   override operator fun minusAssign(listener: () -> Unit) = exec { listeners.remove(listener) }
   operator fun invoke() = exec { buffer.set(false) }
+  fun clear() = exec { listeners.clear() }
   fun fire() {
     if (buffer.compareAndSet(true, false)) {
       listeners.forEach { it() }
@@ -37,24 +39,25 @@ class BufferedEventListeners0 : EventListeners0 {
 }
 
 
-interface EventListeners1<T> {
+interface EventListeners1<T : Any> {
   operator fun plusAssign(listener: (T) -> Unit)
   operator fun minusAssign(listener: (T) -> Unit)
   fun add(listener: (T) -> Unit)
   fun remove(listener: (T) -> Unit)
 }
 
-class ImmediateEventListeners1<T>: EventListeners1<T> {
+class ImmediateEventListeners1<T : Any>: EventListeners1<T> {
   val listeners = ConcurrentHashMap.newKeySet<(T) -> Unit>()!!
   override fun add(listener: (T) -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: (T) -> Unit) = exec { listeners.remove(listener) }
   override operator fun plusAssign(listener: (T) -> Unit) = exec { listeners.add(listener) }
   override operator fun minusAssign(listener: (T) -> Unit) = exec { listeners.remove(listener) }
   operator fun invoke(input: T) = exec { listeners.forEach { it(input) } }
+  fun clear() = exec { listeners.clear() }
 }
 
-class BufferedEventListeners1<T>: EventListeners1<T> {
-  val buffer = ConcurrentLinkedQueue<T>()
+class BufferedEventListeners1<T : Any>: EventListeners1<T> {
+  val buffer = UniqueList<T>()
   val listeners = ConcurrentHashMap.newKeySet<(T) -> Unit>()!!
   override fun add(listener: (T) -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: (T) -> Unit) = exec { listeners.remove(listener) }
@@ -62,8 +65,11 @@ class BufferedEventListeners1<T>: EventListeners1<T> {
   override operator fun minusAssign(listener: (T) -> Unit) = exec { listeners.remove(listener) }
   operator fun invoke(input: T) = exec { buffer.add(input) }
   fun removeEvent(input: T) = exec { buffer.remove(input) }
+  fun clear() = exec { buffer.clear(); listeners.clear() }
   fun fire() {
-    buffer.forEach { event -> listeners.forEach { it(event) } }
-    buffer.clear()
+    while (buffer.isNotEmpty()) {
+      val event = buffer.removeLast()
+      listeners.forEach { it(event) }
+    }
   }
 }

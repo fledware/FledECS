@@ -6,7 +6,8 @@ import fledware.ecs.Entity
 import fledware.ecs.EntityGroupManaged
 import fledware.ecs.WorldBuilder
 import fledware.ecs.WorldManaged
-import fledware.ecs.threads.BurstCyclicalJobPool
+import fledware.ecs.impl.DefaultEntityGroup
+import fledware.ecs.impl.DefaultWorldBuilder
 
 /**
  * This update strategy will put each world that needs

@@ -1,10 +1,11 @@
-package fledware.ecs.update
+package fledware.ecs.impl
 
-import fledware.ecs.ConcurrentWorldEvents
 import fledware.ecs.Engine
 import fledware.ecs.Entity
+import fledware.ecs.EntityEvents
 import fledware.ecs.EntityGroup
 import fledware.ecs.EntityGroupManaged
+import fledware.ecs.ManagedEntity
 import fledware.ecs.System
 import fledware.ecs.WorldData
 import fledware.ecs.WorldManaged
@@ -46,19 +47,21 @@ class DefaultWorld(override val engine: Engine,
 
   private val entitiesToReceive = ConcurrentLinkedQueue<Entity>()
 
-  override val events = ConcurrentWorldEvents()
+  override val events = DefaultWorldEvents()
 
   override var updateIndex: Long = 0
     private set
 
   init {
-    events.onEntityDeleted += this::ensureUnownedEntity
-    events.onEntityLeft += this::ensureUnownedEntity
-    events.onEntityRemoved += this::ensureUnownedEntity
-    events.onEntityCreated += this::ensureMyEntity
-    events.onEntityReceived += this::ensureMyEntity
-    events.onEntityAdded += this::ensureMyEntity
-    events.onEntityChanged += this::ensureMyEntity
+    if (engine.options.paranoidWorldEvents) {
+      events.onEntityDeleted += this::ensureUnownedEntity
+      events.onEntityLeft += this::ensureUnownedEntity
+      events.onEntityRemoved += this::ensureUnownedEntity
+      events.onEntityCreated += this::ensureMyEntity
+      events.onEntityReceived += this::ensureMyEntity
+      events.onEntityAdded += this::ensureMyEntity
+      events.onEntityChanged += this::ensureMyEntity
+    }
   }
 
   private val updating = AtomicBoolean(false)
@@ -176,19 +179,20 @@ class DefaultWorld(override val engine: Engine,
 
   override fun preUpdate() {
     updating.set(true)
+    handleSystemUpdates()
     handleEntitiesReceived()
   }
 
   override fun update(delta: Float) {
     updateIndex++
     logger.trace { "$name update $updateIndex" }
-    handleEvents()
+    events.fireAllEvents()
     for (system in _data.systemsList) {
       val shouldUpdate = system.enabled && system !in _data.systemsToRemove
       logger.trace { "   $name updating $system: $shouldUpdate" }
       if (shouldUpdate) {
         system.update(delta)
-        handleEvents()
+        events.fireEntityEvents()
       }
     }
   }
@@ -200,22 +204,16 @@ class DefaultWorld(override val engine: Engine,
   override fun onDestroy() {
     _data.systemsMutable.values.forEach { it.onDestroy() }
     _data.systemsMutable.clear()
-    events.clearListeners()
-    events.clearBuffer()
+    events.clear()
     _data.clearEntities()
     _data.entityGroupsMutable.forEachValue { it.finished() }
     _data.entityGroupsMutable.clear()
   }
 
   override fun onCreate() {
-    handleEvents()
-    handleEntitiesReceived()
-    handleEvents()
-  }
-
-  private fun handleEvents() {
     handleSystemUpdates()
-    events.fireBufferedEvents()
+    handleEntitiesReceived()
+    events.fireAllEvents()
   }
 
   private fun handleSystemUpdates() {
@@ -256,9 +254,19 @@ class DefaultWorld(override val engine: Engine,
 
   // ================================================================
   //
-  // high level entity operations
+  // high level entity events
   //
   // ================================================================
+
+  private val entityEvents = object : EntityEvents {
+    override fun onNameChange(entity: Entity) {
+      indexEntityName(entity)
+    }
+
+    override fun onUpdate(entity: Entity) {
+      events.onEntityChanged(entity)
+    }
+  }
 
   private fun entityCreate(entity: Entity) {
     addEntity(entity)
@@ -286,22 +294,10 @@ class DefaultWorld(override val engine: Engine,
     events.clearEntityForRemove(entity)
   }
 
-  private fun onEntityMappingUpdate(check: Any?) {
-    if (check == null)
-      throw IllegalStateException("entity null on update")
-    val entity = check as? Entity
-        ?: throw IllegalStateException("entityUpdate received non entity: $check")
-    events.onEntityChanged(entity)
-  }
-
-  init {
-    events.onEntityChanged += this::indexEntityName
-  }
-
 
   // ================================================================
   //
-  // atomic entity operations
+  // entity event checks
   //
   // ================================================================
 
@@ -317,15 +313,17 @@ class DefaultWorld(override val engine: Engine,
       throw IllegalStateException("entity is owned: ${entity.worldSafe}")
   }
 
+
+  // ================================================================
+  //
+  // entity operations
+  //
+  // ================================================================
+
   private fun addEntity(entity: Entity) {
     if (_data.entitiesMutable.containsKey(entity.id))
       throw IllegalStateException("id already exists in world: ${entity.id}")
-    if (entity.worldSafe != null)
-      throw IllegalStateException("entity already owned by ${entity.world}: ${entity.id}")
-    if (entity.components.onUpdate != null)
-      throw IllegalStateException("entity already listened to: ${entity.id}")
-    entity.worldSafe = this.name
-    entity.components.onUpdate = this::onEntityMappingUpdate
+    (entity as ManagedEntity).registerToWorld(name, entityEvents)
     _data.entitiesMutable.put(entity.id, entity)
     indexEntityName(entity)
   }
@@ -333,8 +331,7 @@ class DefaultWorld(override val engine: Engine,
   private fun removeEntity(entity: Entity) {
     if (!_data.entitiesMutable.containsKey(entity.id))
       throw IllegalStateException("entity not in world: $entity")
-    entity.worldSafe = null
-    entity.components.onUpdate = null
+    (entity as ManagedEntity).unregisterWorld()
     _data.entitiesMutable.remove(entity.id)
     _data.entitiesNamedMutable.removeValue(entity)
   }

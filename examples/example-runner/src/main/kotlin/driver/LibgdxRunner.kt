@@ -9,10 +9,10 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.utils.ScreenUtils
-import fledware.ecs.DefaultEngine
 import fledware.ecs.Engine
 import fledware.ecs.ex.withEntityFlags
 import fledware.ecs.ex.withWorldScenes
+import fledware.ecs.impl.DefaultEngine
 import fledware.ecs.update.AtomicWorldUpdateStrategy
 import org.slf4j.LoggerFactory
 

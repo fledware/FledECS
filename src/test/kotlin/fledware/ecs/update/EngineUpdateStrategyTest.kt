@@ -1,11 +1,13 @@
-package fledware.ecs
+package fledware.ecs.update
 
-import fledware.ecs.threads.CyclicalLatchParkLock
-import fledware.ecs.threads.CyclicalLatchReentrantLock
-import fledware.ecs.threads.BurstCyclicalJobExecutorPool
-import fledware.ecs.threads.BurstCyclicalJobWorkerPool
-import fledware.ecs.update.AtomicWorldUpdateStrategy
-import fledware.ecs.update.DefaultUpdateStrategy
+import fledware.ecs.EngineUpdateStrategy
+import fledware.ecs.Movement
+import fledware.ecs.Placement
+import fledware.ecs.createPersonEntity
+import fledware.ecs.createWorldAndFlush
+import fledware.ecs.getOrNull
+import fledware.ecs.impl.DefaultEngine
+import fledware.ecs.worldBuilderMovementOnly
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.params.ParameterizedTest
@@ -13,13 +15,14 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.Executors
 import java.util.stream.Stream
+import kotlin.math.max
 import kotlin.system.measureTimeMillis
 
 internal class EngineUpdateStrategyTest {
   companion object {
     @JvmStatic
     fun engineConfigurations(): Stream<Arguments> = Stream.of(
-        Arguments.of("default", DefaultUpdateStrategy()),
+        Arguments.of("default", MainThreadUpdateStrategy()),
         Arguments.of("worker-reentrant-2", AtomicWorldUpdateStrategy(BurstCyclicalJobWorkerPool(2, CyclicalLatchReentrantLock()))),
         Arguments.of("worker-reentrant-4", AtomicWorldUpdateStrategy(BurstCyclicalJobWorkerPool(4, CyclicalLatchReentrantLock()))),
         Arguments.of("worker-reentrant-6", AtomicWorldUpdateStrategy(BurstCyclicalJobWorkerPool(6, CyclicalLatchReentrantLock()))),
@@ -40,25 +43,39 @@ internal class EngineUpdateStrategyTest {
     )
   }
 
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  @Timeout(2)
+  fun simpleMovementOneWorld(name: String, strategy: EngineUpdateStrategy) {
+    actualTest(strategy, 1, name)
+  }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("engineConfigurations")
   @Timeout(2)
-  fun simpleMovementSmall(name: String, strategy: EngineUpdateStrategy) {
-    actualTest(strategy, 10, name)
+  fun simpleMovementLessThanProcessorCount(name: String, strategy: EngineUpdateStrategy) {
+    val worlds = max(0, Runtime.getRuntime().availableProcessors() / 2)
+    actualTest(strategy, worlds, name)
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  @Timeout(2)
+  fun simpleMovementAtProcessorCount(name: String, strategy: EngineUpdateStrategy) {
+    actualTest(strategy, Runtime.getRuntime().availableProcessors(), name)
   }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("engineConfigurations")
   @Timeout(5)
-  fun simpleMovementBig(name: String, strategy: EngineUpdateStrategy) {
-    actualTest(strategy, 50, name)
+  fun simpleMovementLotsFromProcessorCount(name: String, strategy: EngineUpdateStrategy) {
+    actualTest(strategy, Runtime.getRuntime().availableProcessors() * 2, name)
   }
 
   private fun actualTest(strategy: EngineUpdateStrategy,
                          worldCount: Int,
                          name: String) {
-    val engine = DefaultEngine(strategy, ConcurrentEngineData())
+    val engine = DefaultEngine(strategy)
     try {
       measureTimeMillis {
         engine.start()
@@ -78,7 +95,7 @@ internal class EngineUpdateStrategyTest {
         }
       }.also { println("$name create time: $it") }
       measureTimeMillis {
-        repeat(500) {
+        repeat(50) {
           engine.data.worlds.values.forEach { world ->
             world.data.entities.values().forEach { entity ->
               entity.getOrNull<Movement>()?.deltaY = -1

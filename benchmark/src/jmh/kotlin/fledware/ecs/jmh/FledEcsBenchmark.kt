@@ -1,7 +1,5 @@
 package fledware.ecs.jmh
 
-import fledware.ecs.ConcurrentEngineData
-import fledware.ecs.DefaultEngine
 import fledware.ecs.Engine
 import fledware.ecs.benchmark.Constants
 import fledware.ecs.benchmark.FledCollisionSystem
@@ -12,17 +10,21 @@ import fledware.ecs.benchmark.FledRemovalSystem
 import fledware.ecs.benchmark.FledStateSystem
 import fledware.ecs.benchmark.stdWorldEntity
 import fledware.ecs.createWorldAndFlush
-import fledware.ecs.update.DefaultUpdateStrategy
+import fledware.ecs.impl.DefaultEngine
+import fledware.ecs.update.MainThreadUpdateStrategy
 import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.Setup
+import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 
+@State(Scope.Benchmark)
 open class FledEcsBenchmark : AbstractBenchmark() {
   private lateinit var engine: Engine
 
   @Setup
   open fun init() {
-    engine = DefaultEngine(DefaultUpdateStrategy(), ConcurrentEngineData())
+    engine = DefaultEngine(MainThreadUpdateStrategy())
     val world = engine.createWorldAndFlush("main") {
       addSystem(FledMovementSystem())
       addSystem(FledStateSystem())

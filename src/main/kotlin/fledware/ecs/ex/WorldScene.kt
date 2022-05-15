@@ -19,10 +19,7 @@ import kotlin.collections.set
 // ==================================================================
 
 fun Engine.withWorldScenes(): Engine {
-  val flagData = data.components.getMaybe<EntityFlagsData>()
-      ?: throw IllegalStateException("WorldScenes requires EntityFlags extension")
-  val scenePersistentFlag = flagData.indexOfFlag("scene-persistent")
-  data.components.put(WorldSceneEngineApi(this, scenePersistentFlag))
+  data.components.put(WorldSceneEngineApi(this))
   addCreateWorldDecorator {
     components.put(WorldSceneData(""))
   }
@@ -38,8 +35,7 @@ val EngineData.scenes: WorldSceneEngineApi
 //
 // ==================================================================
 
-data class WorldSceneEngineApi(private val engine: Engine,
-                               val scenePersistentFlag: FlagIndex) {
+data class WorldSceneEngineApi(private val engine: Engine) {
   val savedScenes = ConcurrentHashMap<String, Scene>()
   val sceneFactories = ConcurrentHashMap<String, SceneFactoryWrapper>()
 

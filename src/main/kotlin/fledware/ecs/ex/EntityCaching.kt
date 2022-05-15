@@ -6,6 +6,7 @@ import fledware.ecs.Entity
 import fledware.ecs.EntityFactory
 import fledware.ecs.WorldData
 import fledware.ecs.entityComponentIndexOf
+import fledware.ecs.getOrAdd
 import fledware.ecs.getOrNull
 import fledware.ecs.util.MapperIndex
 import fledware.utilities.get
@@ -127,5 +128,5 @@ data class CacheInfo(var bucket: String)
 var Entity.cacheBucket: String
   get() = getOrNull<CacheInfo>()?.bucket ?: ""
   set(value) {
-    (getOrNull() ?: add(CacheInfo(""))).bucket = value
+    getOrAdd { CacheInfo("") }.bucket = value
   }

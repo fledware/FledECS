@@ -1,13 +1,7 @@
-@file:Suppress("MemberVisibilityCanBePrivate")
-
 package fledware.ecs
 
-import fledware.ecs.util.Mapper
 import fledware.ecs.util.MapperIndex
-import fledware.utilities.ConcurrentTypedMap
 import fledware.utilities.MutableTypedMap
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.reflect.KClass
 
 /**
@@ -75,6 +69,11 @@ interface EngineDataInternal : EngineData {
   fun shutdown()
 }
 
+/**
+ * Gets a MapperIndex for the given entity component class.
+ * The index is guaranteed to be the same so all systems can
+ * reference data consistently for all entities.
+ */
 inline fun <reified T : Any> EngineData.entityComponentIndexOf() =
     entityComponentIndexOf(T::class)
 
@@ -85,56 +84,4 @@ inline fun <reified T : Any> EngineData.entityComponentIndexOf() =
 interface EngineDataLifecycle {
   fun init(engine: Engine) = Unit
   fun shutdown() = Unit
-}
-
-// ==================================================================
-//
-// default implementation of EngineData
-//
-// This implementation is thread safe and fairly performant.
-// This class is also left open so engine instantiators can add
-// extensions to the engine without needing to change the
-// engine itself.
-//
-// ==================================================================
-
-open class ConcurrentEngineData : EngineDataInternal {
-  protected val entityComponentMapper = Mapper<KClass<*>>()
-  protected val entityIds = AtomicLong()
-  override val worlds = ConcurrentHashMap<String, WorldManaged>()
-  override val components = ConcurrentTypedMap()
-
-  override fun <T : Any> entityComponentIndexOf(clazz: KClass<T>): MapperIndex<T> {
-    return entityComponentMapper.indexOf(clazz)
-  }
-
-  override fun addWorld(world: WorldManaged) {
-    if (worlds.putIfAbsent(world.name, world) != null)
-      throw IllegalStateException("world already exists: ${world.name}")
-  }
-
-  override fun removeWorld(name: String): WorldManaged {
-    val world = worlds.remove(name)
-        ?: throw IllegalStateException("world doesn't exists: $name")
-    world.onDestroy()
-    return world
-  }
-
-  override fun createEntity(decorator: Entity.() -> Unit): Entity {
-    val result = Entity(entityIds.incrementAndGet(), entityComponentMapper.list())
-    result.components.onUpdateObject = result
-    result.decorator()
-    return result
-  }
-
-  override fun start(engine: Engine) {
-    components.values.forEach { (it as? EngineDataLifecycle)?.init(engine) }
-  }
-
-  override fun shutdown() {
-    worlds.values.forEach { it.onDestroy() }
-    worlds.clear()
-    components.values.forEach { (it as? EngineDataLifecycle)?.shutdown() }
-    components.clear()
-  }
 }

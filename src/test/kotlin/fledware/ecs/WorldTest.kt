@@ -1,18 +1,14 @@
-package fledware.ecs.update
+package fledware.ecs
 
-import fledware.ecs.MovementSystem
-import fledware.ecs.UpdateCountSystem
-import fledware.ecs.createPersonEntity
-import fledware.ecs.createTestEngine
-import fledware.ecs.createTestWorld
 import fledware.ecs.ex.BlockExecutingSystem
 import fledware.ecs.ex.execute
-import fledware.ecs.get
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-class DefaultWorldTest {
+class WorldTest {
   @Test
   fun testEntitiesOwningWorld() {
     val engine = createTestEngine()
@@ -38,11 +34,9 @@ class DefaultWorldTest {
     assertEquals(3, world2.data.entities.size())
     engine.update(1f)
 
-    world1.data.systems.get<BlockExecutingSystem>().execute {
-      val passing = data.entities.find { it.name == "target" }!!
-      data.sendEntity("world2", passing)
-    }
+    world1.execute { data.sendEntity("world2", data.entitiesNamed["target"]!!) }
     engine.update(1f)
+
     assertEquals(2, world1.data.entities.size())
     assertEquals(3, world2.data.entities.size())
     val exception = assertFailsWith<IllegalStateException> {
@@ -117,18 +111,65 @@ class DefaultWorldTest {
   fun testWorldAddSystemDuringUpdate() {
     val engine = createTestEngine()
     val world = engine.createTestWorld()
-    val system = UpdateCountSystem()
+    val system = UpdateCountSystemNotMovement()
     world.execute {
       data.addSystem(system)
       assertEquals(0, system.onCreateCount)
     }
+
+    assertFalse(world.data.systems.contains(UpdateCountSystemNotMovement::class))
     engine.update(1f)
-    assertEquals(1, system.onCreateCount)
+    assertTrue(world.data.systems.contains(UpdateCountSystemNotMovement::class))
+    assertEquals(0, system.onCreateCount)
     assertEquals(0, system.updateCount)
     assertEquals(0, system.onDestroyCount)
     engine.update(1f)
     assertEquals(1, system.onCreateCount)
     assertEquals(1, system.updateCount)
     assertEquals(0, system.onDestroyCount)
+  }
+
+  @Test
+  fun testWorldRemoveSystemDuringUpdate() {
+    val engine = createTestEngine()
+    val world = engine.createTestWorld()
+
+    val system = UpdateCountSystemNotMovement()
+    world.data.addSystem(system)
+    engine.update(1f)
+    assertEquals(1, system.onCreateCount)
+    assertEquals(1, system.updateCount)
+    assertEquals(0, system.onDestroyCount)
+
+    world.execute {
+      data.removeSystem(UpdateCountSystemNotMovement::class)
+    }
+    engine.update(1f)
+    assertEquals(1, system.onCreateCount)
+    assertEquals(1, system.updateCount)
+    assertEquals(0, system.onDestroyCount)
+
+    engine.update(1f)
+    assertEquals(1, system.onCreateCount)
+    assertEquals(1, system.updateCount)
+    assertEquals(1, system.onDestroyCount)
+  }
+
+  @Test
+  fun entityEventsAreBuffered() {
+    val engine = createTestEngine()
+    val world = engine.createTestWorld()
+    var count = 0
+    world.events.onEntityChanged += { count++ }
+    engine.update(1f)
+    assertEquals(0, count)
+
+    world.execute { data.entities.first().notifyUpdate() }
+    engine.update(1f)
+    assertEquals(1, count)
+
+    world.execute { data.entities.first().also { it.notifyUpdate(); it.notifyUpdate() } }
+    engine.update(1f)
+    assertEquals(2, count)
   }
 }

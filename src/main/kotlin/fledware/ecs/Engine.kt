@@ -1,15 +1,34 @@
 package fledware.ecs
 
-import fledware.ecs.update.DefaultUpdateStrategy
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
-
 interface Engine {
+  /**
+   * The update strategy for the engine.
+   */
   val updateStrategy: EngineUpdateStrategy
+
+  /**
+   * Lifecycle events that are at the engine level.
+   */
   val events: EngineEvents
+
+  /**
+   * All the data associated with this engine.
+   *
+   * This gives a logical separation for where extensions methods
+   * should exist for engine extensions.
+   */
   val data: EngineData
+
+  /**
+   * The options this engine is initialized with.
+   */
   val options: EngineOptions
+
+  /**
+   * Whether this engine is started.
+   *
+   * If this returns false, [start] needs to be called.
+   */
   val started: Boolean
 
   /**
@@ -24,7 +43,7 @@ interface Engine {
    * Add a decorator that is called before the decorator
    * passed into the create world request.
    */
-  fun addCreateWorldDecorator(decorator: WorldBuilderLambda)
+  fun addCreateWorldDecorator(decorator: WorldBuilderDecorator)
 
   /**
    * Requests a world to be created. Worlds cannot be created during updates
@@ -32,7 +51,7 @@ interface Engine {
    * that other worlds be created. Only after the EngineUpdateStrategy has
    * finished will the engine then create a world.
    */
-  fun requestCreateWorld(name: String, options: Any? = null, decorator: WorldBuilderLambda)
+  fun requestCreateWorld(name: String, options: Any? = null, decorator: WorldBuilderDecorator)
 
   /**
    * Same as requestCreateWorld, but for destroying it.
@@ -50,12 +69,36 @@ interface Engine {
    */
   fun requestSafeBlock(block: Engine.() -> Unit)
 
+  /**
+   * Updates the active worlds based on the [updateStrategy].
+   *
+   * This method will automatically handle requests before and
+   * after the update strategy finishes.
+   */
   fun update(delta: Float)
 
+  /**
+   * Starts the engine. This should be called before update.
+   */
   fun start()
+
+  /**
+   * Stops and cleans the engine.
+   */
   fun shutdown()
 }
 
+/**
+ * Sending an entity at the engine level. The given entity must not be
+ * registered to a world. Generally, this method is meant to be used by
+ * worlds.
+ *
+ * If you are trying to send an entity to a world within a system, use
+ * [WorldData.sendEntity].
+ *
+ * The entity is guaranteed to be registered to the target world on
+ * the beginning of the _next_ call to [Engine.update].
+ */
 fun Engine.sendEntity(worldName: String, entity: Entity) {
   check(entity.worldSafe == null) { "entity is owned by world: ${entity.worldSafe}" }
   val world = data.worlds[worldName]
@@ -63,160 +106,23 @@ fun Engine.sendEntity(worldName: String, entity: Entity) {
   world.receiveEntity(entity)
 }
 
+/**
+ * Sends a message to the target world.
+ */
 fun Engine.sendMessage(worldName: String, message: Any) {
   val world = data.worlds[worldName]
     ?: throw IllegalStateException("world not found: $worldName")
   world.receiveMessage(message)
 }
 
+/**
+ * Convenience method for calling [Engine.requestCreateWorld] and immediately
+ * handling the requests to force the creation of the world.
+ */
 fun Engine.createWorldAndFlush(name: String,
                                options: Any? = null,
-                               decorator: WorldBuilderLambda): World {
+                               decorator: WorldBuilderDecorator): World {
   requestCreateWorld(name, options, decorator)
   handleRequests()
   return data.worlds[name]!!
-}
-
-
-// ==================================================================
-//
-// DefaultEngine
-// This implementation is thread safe and can
-// be accessed concurrently by worlds as updates happen.
-//
-// ==================================================================
-
-open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = DefaultUpdateStrategy(),
-                         override val data: EngineDataInternal = ConcurrentEngineData(),
-                         override val options: EngineOptions = EngineOptions())
-  : Engine {
-  override val events = ConcurrentEngineEvents()
-  private val worldDecorators = CopyOnWriteArrayList<WorldBuilderLambda>()
-  private val requests = ConcurrentLinkedDeque<Any>()
-  private val mutating = AtomicBoolean(false)
-  override var started: Boolean = false
-    protected set
-
-  private inline fun mutatingLock(block: () -> Unit) {
-    if (!mutating.compareAndSet(false, true))
-      throw IllegalStateException("cannot call while calling another method that mutates state")
-    try {
-      block()
-    }
-    finally {
-      mutating.set(false)
-    }
-  }
-
-  override fun update(delta: Float) = mutatingLock {
-    actualHandleRequests()
-    updateStrategy.update(delta)
-    actualHandleRequests()
-  }
-
-  override fun start() = mutatingLock {
-    if (started)
-      throw IllegalStateException("already started")
-    started = true
-    updateStrategy.start(this)
-    data.start(this)
-    events.onEngineCreated(this)
-    actualHandleRequests()
-  }
-
-  override fun shutdown() = mutatingLock {
-    events.onEngineDestroyed(this)
-    requests.clear()
-    events.clear()
-    data.shutdown()
-    updateStrategy.shutdown()
-  }
-
-
-  // ================================================================
-  //
-  // requests
-  //
-  // ================================================================
-
-  override fun handleRequests() = mutatingLock {
-    actualHandleRequests()
-  }
-
-  private fun actualHandleRequests() {
-    while (true) {
-      val request = requests.poll() ?: break
-      when (request) {
-        is EngineRequestWorldCreate -> createWorld(request)
-        is EngineRequestWorldDestroy -> destroyWorld(request.worldName)
-        is EngineRequestWorldUpdated -> updateWorld(request)
-        is EngineRequestBlock -> safeBlock(request)
-        else -> throw IllegalStateException("unexpected request: $request")
-      }
-    }
-    events.fire()
-  }
-
-  override fun addCreateWorldDecorator(decorator: WorldBuilderLambda) {
-    worldDecorators += decorator
-  }
-
-  override fun requestCreateWorld(name: String,
-                                  options: Any?,
-                                  decorator: WorldBuilderLambda) {
-    requests.add(EngineRequestWorldCreate(name, options, decorator))
-  }
-
-  override fun requestDestroyWorld(name: String) {
-    requests.add(EngineRequestWorldDestroy(name))
-  }
-
-  override fun requestWorldUpdated(name: String, update: Boolean) {
-    requests.add(EngineRequestWorldUpdated(name, update))
-  }
-
-  override fun requestSafeBlock(block: Engine.() -> Unit) {
-    requests.add(EngineRequestBlock(block))
-  }
-
-
-  // ================================================================
-  //
-  //
-  //
-  // ================================================================
-
-  private fun safeBlock(request: EngineRequestBlock) {
-    request.block.invoke(this)
-  }
-
-  private fun createWorld(request: EngineRequestWorldCreate): World {
-    val builder = updateStrategy.worldBuilder(this, request.worldName, request.options)
-    worldDecorators.forEach { builder.it() }
-    val decorator = request.builder
-    builder.decorator()
-    val result = builder.build()
-    data.addWorld(result)
-    if (options.autoWorldUpdateOnCreate)
-      updateStrategy.registerWorld(result)
-    result.onCreate()
-    events.onWorldCreated(result)
-    return result
-  }
-
-  private fun destroyWorld(name: String) {
-    val world = data.removeWorld(name)
-    updateStrategy.unregisterWorld(world)
-    world.onDestroy()
-    events.onWorldDestroyed(world)
-  }
-
-  private fun updateWorld(request: EngineRequestWorldUpdated) {
-    val world = data.worlds[request.worldName]
-      ?: throw IllegalStateException("world not found: $request")
-    if (request.update)
-      updateStrategy.registerWorld(world as WorldManaged)
-    else
-      updateStrategy.unregisterWorld(world as WorldManaged)
-  }
 }

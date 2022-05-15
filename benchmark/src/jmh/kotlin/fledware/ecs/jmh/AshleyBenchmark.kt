@@ -11,9 +11,12 @@ import fledware.ecs.benchmark.AshleyStateSystem
 import fledware.ecs.benchmark.Constants
 import fledware.ecs.benchmark.stdWorldEntity
 import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.Scope
 
 import org.openjdk.jmh.annotations.Setup
+import org.openjdk.jmh.annotations.State
 
+@State(Scope.Benchmark)
 open class AshleyBenchmark : AbstractBenchmark() {
   private lateinit var engine: Engine
 

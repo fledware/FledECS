@@ -12,14 +12,21 @@ import kotlin.reflect.KClass
  * and a bunch of components that are indexed the same across
  * the entire engine.
  */
-class Entity(
+abstract class Entity(
     val id: Long,
     val components: MapperList<KClass<*>, Any>
 ) {
+  init {
+    components.onUpdate = { events?.onUpdate(this) }
+  }
+
+  protected var events: EntityEvents? = null
+
   /**
    * the world that his entity belongs to.
    */
   var worldSafe: String? = null
+    protected set
 
   /**
    * The world that this entity belongs to.
@@ -40,7 +47,7 @@ class Entity(
   var name: String = ""
     set(value) {
       field = value
-      notifyUpdate()
+      events?.onNameChange(this)
     }
 
   /**
@@ -55,7 +62,7 @@ class Entity(
    * Update notifications are dedupe and will only be fired once after
    * a system update.
    */
-  fun notifyUpdate() = components.fireOnUpdate()
+  fun notifyUpdate() = events?.onUpdate(this)
 
   /**
    * Adds the given component.
@@ -148,6 +155,16 @@ class Entity(
       return "Entity($id){$name}"
     return "Entity($id)"
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Entity) return false
+    return id == other.id
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }
 
 inline fun <reified T : Any> Entity.getOrAdd(block: () -> T): T {
@@ -180,13 +197,32 @@ fun Entity.debugToString(startDepth: Int = 0): String {
     return this
   }
 
-  result.prependDepth(0).append("Entity(").append(this.id).append(") ").append(this.name)
+  result.prependDepth(0).append(this.toString()).append(": ").append(worldSafe ?: "(no world)")
   var hasComponents = false
   this.components.forEachNotNull { _, value ->
     result.appendLine().prependDepth(2).append(value)
     hasComponents = true
   }
   if (!hasComponents)
-    result.prependDepth(2).append("*no components*")
+    result.appendLine().prependDepth(2).append("*no components*")
   return result.toString()
+}
+
+/**
+ * The methods for managing an entity.
+ *
+ * These methods should only be called by the world.
+ */
+class ManagedEntity(id: Long, components: MapperList<KClass<*>, Any>) : Entity(id, components) {
+  fun registerToWorld(worldName: String, events: EntityEvents) {
+    if (worldSafe != null || this.events != null)
+      throw IllegalStateException("$this is already registered to world $worldSafe")
+    this.worldSafe = worldName
+    this.events = events
+  }
+
+  fun unregisterWorld() {
+    this.worldSafe = null
+    this.events = null
+  }
 }

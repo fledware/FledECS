@@ -1,4 +1,4 @@
-package fledware.ecs.threads
+package fledware.ecs.update
 
 /**
  * A reusable latch lock meant to coordinate a single "starter"

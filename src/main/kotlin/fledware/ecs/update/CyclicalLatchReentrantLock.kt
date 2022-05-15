@@ -1,4 +1,4 @@
-package fledware.ecs.threads
+package fledware.ecs.update
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock

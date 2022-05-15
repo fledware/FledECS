@@ -6,6 +6,7 @@ import fledware.ecs.Engine
 import fledware.ecs.EngineData
 import fledware.ecs.Entity
 import fledware.ecs.WorldData
+import fledware.ecs.getOrAdd
 import fledware.ecs.getOrNull
 import fledware.ecs.util.Mapper
 import fledware.ecs.util.exec
@@ -118,7 +119,7 @@ fun Entity.flagContains(index: FlagIndex): Boolean {
 }
 
 fun Entity.flagSet(index: FlagIndex) {
-  val flags = this.getOrNull() ?: this.add(EntityFlags())
+  val flags = this.getOrAdd { EntityFlags() }
   if (!flags[index.index]) {
     flags += index.index
     notifyUpdate()

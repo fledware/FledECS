@@ -1,4 +1,4 @@
-package fledware.ecs.threads
+package fledware.ecs.update
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue

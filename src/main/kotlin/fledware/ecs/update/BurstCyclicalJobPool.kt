@@ -1,4 +1,4 @@
-package fledware.ecs.threads
+package fledware.ecs.update
 
 import java.util.concurrent.Executors
 
@@ -39,6 +39,10 @@ interface BurstCyclicalJobPool {
   fun shutdown()
 }
 
+/**
+ * Convenience method for creating a [BurstCyclicalJobPool] with suggested configuration.
+ */
 @Suppress("FunctionName")
-fun BurstCyclicalJobPool(threads: Int = Runtime.getRuntime().availableProcessors()) =
-    BurstCyclicalJobExecutorPool(Executors.newFixedThreadPool(threads), true)
+fun BurstCyclicalJobPool(
+    threads: Int = Runtime.getRuntime().availableProcessors()
+): BurstCyclicalJobPool = BurstCyclicalJobExecutorPool(Executors.newFixedThreadPool(threads), true)

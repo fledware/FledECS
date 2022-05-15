@@ -3,7 +3,8 @@ package fledware.ecs
 import fledware.ecs.ex.BlockExecutingSystem
 import fledware.ecs.ex.createCachedEntity
 import fledware.ecs.ex.sceneName
-import fledware.ecs.update.DefaultUpdateStrategy
+import fledware.ecs.impl.DefaultEngine
+import fledware.ecs.update.MainThreadUpdateStrategy
 
 data class Placement(var x: Int, var y: Int, var size: Int)
 
@@ -40,6 +41,8 @@ class MovementSystem : UpdateCountSystem() {
     }
   }
 }
+
+class UpdateCountSystemNotMovement : UpdateCountSystem()
 
 open class UpdateCountSystem : AbstractSystem() {
   var onDestroyCount = 0
@@ -108,7 +111,4 @@ fun Engine.createEmptySceneWorld(name: String = "test"): World {
   return createWorldAndFlush(name, null, WorldBuilder::worldBuilderEmptyScene)
 }
 
-fun createTestEngine() = DefaultEngine(
-  DefaultUpdateStrategy(),
-  ConcurrentEngineData()
-).also { it.start() }
+fun createTestEngine() = DefaultEngine(MainThreadUpdateStrategy()).also { it.start() }

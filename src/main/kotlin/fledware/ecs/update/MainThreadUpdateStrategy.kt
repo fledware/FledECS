@@ -6,12 +6,14 @@ import fledware.ecs.Entity
 import fledware.ecs.EntityGroupManaged
 import fledware.ecs.WorldBuilder
 import fledware.ecs.WorldManaged
+import fledware.ecs.impl.DefaultEntityGroup
+import fledware.ecs.impl.DefaultWorldBuilder
 
 /**
  * Simple UpdateStrategy that just loops through
  * each world and updates them one at a time.
  */
-class DefaultUpdateStrategy : EngineUpdateStrategy {
+class MainThreadUpdateStrategy : EngineUpdateStrategy {
   private val worlds = linkedSetOf<WorldManaged>()
   private var worldsCache: Array<WorldManaged>? = null
   private var updateContext = Thread.currentThread().contextClassLoader

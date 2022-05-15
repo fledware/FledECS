@@ -1,6 +1,5 @@
-package fledware.ecs.update
+package fledware.ecs.impl
 
-import fledware.ecs.AbstractWorldBuilder
 import fledware.ecs.Engine
 import fledware.ecs.WorldBuilder
 import fledware.ecs.WorldManaged
