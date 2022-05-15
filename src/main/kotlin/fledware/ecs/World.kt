@@ -62,6 +62,12 @@ interface WorldManaged : World {
    * on threading.
    */
   val dataSafe: WorldData
+
+  /**
+   * The update group this world belongs to.
+   */
+  val updateGroup: String
+
   /**
    * used by the engine to let the world know it is wired up externally
    * and can start initialization.

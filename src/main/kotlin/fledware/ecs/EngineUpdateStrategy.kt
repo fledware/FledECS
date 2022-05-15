@@ -15,12 +15,17 @@ interface EngineUpdateStrategy {
    * all updating when the method returns.
    *
    * Unless there are concrete reasons, the pattern for world
-   * updates should generally be:
+   * updates should generally be (all of these may be concurrent):
    * - call preUpdate on all worlds
    * - call update on all worlds
    * - call postUpdate on all worlds
    */
   fun update(delta: Float)
+
+  /**
+   * Creates an update group that a world can be associated to.
+   */
+  fun createWorldUpdateGroup(name: String, order: Int)
 
   /**
    * creates a new world builder that will work with this update strategy

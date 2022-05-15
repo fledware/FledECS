@@ -12,6 +12,12 @@ interface WorldBuilder : EntityFactory {
    */
   var name: String
   /**
+   * The ordered update group this world will belong to.
+   *
+   * @see EngineUpdateStrategy.createWorldUpdateGroup
+   */
+  var updateGroup: String
+  /**
    * User defined options passed into [Engine.requestCreateWorld].
    */
   var options: Any?

@@ -20,6 +20,20 @@ fun getRandomString(length: Int): String {
       .joinToString("")
 }
 
+class CachedArray<T : Any>(val builder: () -> Array<T>) {
+  private var cache: Array<T>? = null
+
+  operator fun invoke(): Array<T> {
+    if (cache == null)
+      cache = builder()
+    return cache!!
+  }
+
+  fun clear() {
+    cache = null
+  }
+}
+
 
 // ==================================================================
 //

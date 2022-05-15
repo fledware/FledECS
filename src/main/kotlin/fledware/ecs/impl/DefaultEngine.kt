@@ -13,7 +13,6 @@ import fledware.ecs.ManagedEntity
 import fledware.ecs.World
 import fledware.ecs.WorldBuilderDecorator
 import fledware.ecs.WorldManaged
-import fledware.ecs.update.MainThreadUpdateStrategy
 import fledware.ecs.util.ImmediateEventListeners1
 import fledware.ecs.util.Mapper
 import fledware.ecs.util.MapperIndex
@@ -30,7 +29,7 @@ import kotlin.reflect.KClass
  * This implementation is thread safe and can
  * be accessed concurrently by worlds as updates happen.
  */
-open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = MainThreadUpdateStrategy(),
+open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = mainThreadUpdateStrategy(),
                          override val data: EngineDataInternal = DefaultEngineData(),
                          override val options: EngineOptions = EngineOptions())
   : Engine {
@@ -63,6 +62,8 @@ open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = Mai
       throw IllegalStateException("already started")
     started = true
     updateStrategy.start(this)
+    updateStrategy.createWorldUpdateGroup(options.defaultUpdateGroupName,
+                                          options.defaultUpdateGroupOrder)
     data.start(this)
     events.onEngineStart(this)
     actualHandleRequests()
@@ -163,7 +164,6 @@ open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = Mai
       updateStrategy.unregisterWorld(world as WorldManaged)
   }
 }
-
 
 
 // ==================================================================
