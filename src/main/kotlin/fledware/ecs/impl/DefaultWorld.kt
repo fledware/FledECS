@@ -160,6 +160,10 @@ class DefaultWorld(override val engine: Engine,
       entityCreate(entity)
       return entity
     }
+
+    override fun clearCaches() {
+      this.systemsListCache = null
+    }
   }
 
   override val data: WorldData

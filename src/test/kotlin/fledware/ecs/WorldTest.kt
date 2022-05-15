@@ -2,10 +2,12 @@ package fledware.ecs
 
 import fledware.ecs.ex.BlockExecutingSystem
 import fledware.ecs.ex.execute
+import fledware.ecs.impl.AbstractWorldData
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class WorldTest {
@@ -171,5 +173,47 @@ class WorldTest {
     world.execute { data.entities.first().also { it.notifyUpdate(); it.notifyUpdate() } }
     engine.update(1f)
     assertEquals(2, count)
+  }
+
+  @Test
+  fun systemUpdatesAreSorted() {
+    val engine = createTestEngine()
+    val world = engine.createTestWorld()
+    world.data.systems.get<BlockExecutingSystem>().order = 10
+    world.data.systems.get<MovementSystem>().order = 5
+
+    engine.update(1f)
+    (world.data as AbstractWorldData).systemsList.also { systems ->
+      assertIs<MovementSystem>(systems[0])
+      assertIs<BlockExecutingSystem>(systems[1])
+    }
+
+    world.data.systems.get<BlockExecutingSystem>().order = 3
+    engine.update(1f)
+    (world.data as AbstractWorldData).systemsList.also { systems ->
+      assertIs<BlockExecutingSystem>(systems[0])
+      assertIs<MovementSystem>(systems[1])
+    }
+  }
+
+  @Test
+  fun systemCanChangeOrderDuringUpdate() {
+    val engine = createTestEngine()
+    val world = engine.createTestWorld()
+    world.data.systems.get<BlockExecutingSystem>().order = 10
+    world.data.systems.get<MovementSystem>().order = 5
+
+    engine.update(1f)
+    (world.data as AbstractWorldData).systemsList.also { systems ->
+      assertIs<MovementSystem>(systems[0])
+      assertIs<BlockExecutingSystem>(systems[1])
+    }
+
+    world.execute { order = 3 }
+    engine.update(1f)
+    (world.data as AbstractWorldData).systemsList.also { systems ->
+      assertIs<BlockExecutingSystem>(systems[0])
+      assertIs<MovementSystem>(systems[1])
+    }
   }
 }

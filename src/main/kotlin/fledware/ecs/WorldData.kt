@@ -109,6 +109,14 @@ interface WorldData : EntityFactory {
    * send a message to the given world
    */
   fun sendMessage(world: String, message: Any)
+
+  /**
+   * Clears caches of data if there is any.
+   *
+   * This is useful for forcing reindexing of systems
+   * or any extension data that needs to be reprocessed.
+   */
+  fun clearCaches()
 }
 
 /**

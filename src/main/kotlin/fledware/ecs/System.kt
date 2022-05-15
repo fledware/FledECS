@@ -10,6 +10,17 @@ interface System {
    */
   val enabled: Boolean
   /**
+   * The order this system should be updated in.
+   *
+   * There is no guaranteed ordering for systems that have
+   * the same order.
+   *
+   * The default order is 0 and can be changed during updates,
+   * but it is up to the [World] implementor on how to handle
+   * those changes and when they actually take effect.
+   */
+  val order: Int
+  /**
    * Called by the world once the world is finished creating.
    *
    * @param world the world that is managing this system
@@ -34,6 +45,15 @@ interface System {
  * in variables.
  */
 abstract class AbstractSystem : System {
+  /**
+   * Implementation of enabled where [onEnabled] and
+   * [onDisabled] methods are called. The setter does
+   * not check the previous value and will always call
+   * [onEnabled] when set to true and [onDisabled] when
+   * set to false.
+   *
+   * [onEnabled] is not called during [onCreate].
+   */
   override var enabled: Boolean = true
     set(value) {
       field = value
@@ -41,6 +61,18 @@ abstract class AbstractSystem : System {
         onEnabled()
       else
         onDisabled()
+    }
+
+  /**
+   * The order of this world.
+   *
+   * When setting this value, it automatically calls [WorldData.clearCaches]
+   * to force a reindex and sorting of the world systems.
+   */
+  override var order: Int = 0
+    set(value) {
+      field = value
+      data.clearCaches()
     }
 
   /**

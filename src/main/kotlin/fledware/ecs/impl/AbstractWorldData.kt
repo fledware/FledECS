@@ -33,8 +33,9 @@ abstract class AbstractWorldData(override val engine: Engine,
   var systemsListCache: List<System>? = null
   val systemsList: List<System>
     get() {
-      if (systemsListCache == null)
-        systemsListCache = systemsMutable.values.toList()
+      if (systemsListCache == null) {
+        systemsListCache = systemsMutable.values.toList().sortedBy { it.order }
+      }
       return systemsListCache!!
     }
 
