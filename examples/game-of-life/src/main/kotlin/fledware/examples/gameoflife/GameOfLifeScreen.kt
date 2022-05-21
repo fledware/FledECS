@@ -16,7 +16,7 @@ import driver.util.screenMax
 import driver.util.screenMin
 import driver.util.tinyLabelAndRow
 import fledware.ecs.World
-import fledware.ecs.entityComponentIndexOf
+import fledware.ecs.componentIndexOf
 import fledware.ecs.forEach
 import fledware.ecs.forEachWorld
 import fledware.ecs.get
@@ -47,8 +47,8 @@ class GameOfLifeScreen : GameScreen() {
   private val cellSizeF = cellSize.toFloat()
   private val absoluteMax = engineInfo.maxCellLocation * cellSize
   private val viewportBounds = Rectangle()
-  private val cellAliveIndex = engine.data.entityComponentIndexOf<CellAlive>()
-  private val cellLocationIndex = engine.data.entityComponentIndexOf<CellLocation>()
+  private val cellAliveIndex = engine.data.componentIndexOf<CellAlive>()
+  private val cellLocationIndex = engine.data.componentIndexOf<CellLocation>()
 
   // ui stuffs
   private val fpsLabel: Label
