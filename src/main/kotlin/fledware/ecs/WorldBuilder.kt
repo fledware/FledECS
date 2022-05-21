@@ -22,7 +22,7 @@ interface WorldBuilder : EntityFactory {
    */
   var options: Any?
   /**
-   * Components to be added to [WorldData.components]
+   * Components to be added to [WorldData.contexts]
    */
   val components: MutableTypedMap<Any>
   /**

@@ -1,6 +1,5 @@
 package fledware.ecs
 
-import fledware.ecs.util.MapperIndex
 import fledware.utilities.MutableTypedMap
 import fledware.utilities.TypedMap
 import org.eclipse.collections.api.map.primitive.LongObjectMap
@@ -25,7 +24,7 @@ interface WorldData : EntityFactory {
    * world level components. This is never cleared (except for on destroy)
    * and can be used for global data to this world.
    */
-  val components: MutableTypedMap<Any>
+  val contexts: MutableTypedMap<Any>
 
   /**
    * all the systems in this world.
@@ -120,16 +119,12 @@ interface WorldData : EntityFactory {
 }
 
 /**
- * gets the MapperIndex for the given entity component
- */
-fun <T : Any> WorldData.componentIndexOf(clazz: KClass<T>): MapperIndex<T> =
-    engine.data.entityComponentIndexOf(clazz)
-
-/**
- * gets the MapperIndex for the given entity component
+ * Gets a MapperIndex for the given entity component class.
+ * The index is guaranteed to be the same so all systems can
+ * reference data consistently for all entities.
  */
 inline fun <reified T : Any> WorldData.componentIndexOf() =
-    engine.data.entityComponentIndexOf(T::class)
+    engine.data.componentMapper.indexOf<T>(T::class)
 
 
 inline fun <reified T : System> TypedMap<System>.get() = get(T::class)

@@ -5,7 +5,7 @@ import fledware.ecs.EngineData
 import fledware.ecs.Entity
 import fledware.ecs.EntityFactory
 import fledware.ecs.WorldData
-import fledware.ecs.entityComponentIndexOf
+import fledware.ecs.componentIndexOf
 import fledware.ecs.getOrAdd
 import fledware.ecs.getOrNull
 import fledware.ecs.util.MapperIndex
@@ -23,7 +23,7 @@ import kotlin.math.max
 // ==================================================================
 
 fun Engine.withEntityCaching(defaultSize: Int = 100): Engine {
-  data.components.put(EntityCaching(defaultSize, data.entityComponentIndexOf()))
+  data.contexts.put(EntityCaching(defaultSize, data.componentIndexOf()))
   return this
 }
 
@@ -43,6 +43,8 @@ class EntityCachingBucket(defaultSize: Int) {
         cached.remove()
       }
     }
+  val size: Int
+    get() = cached.size
   val hasSpace: Boolean
     get() = cached.size < maxCached
   private val cached = ConcurrentLinkedQueue<Entity>()
@@ -54,7 +56,7 @@ class EntityCachingBucket(defaultSize: Int) {
 
   fun take(): Entity? {
     val result = cached.poll() ?: return null
-    for (component in result.components.data)
+    for (component in result.data.data)
       (component as? CachingComponent)?.reset()
     return result
   }
@@ -69,10 +71,10 @@ interface CachingComponent {
 }
 
 val EngineData.caching: EntityCaching
-  get() = components.get()
+  get() = contexts.get()
 
 val EngineData.cachingMaybe: EntityCaching?
-  get() = components.getMaybe()
+  get() = contexts.getMaybe()
 
 
 // ==================================================================
@@ -94,7 +96,7 @@ fun EntityFactory.createCachedEntity(bucket: String, onCreateDecorator: Entity.(
 fun WorldData.removeEntityToCache(entity: Entity) {
   removeEntity(entity)
   val caching = engine.data.cachingMaybe ?: return
-  val bucket = entity[caching.cacheInfoIndex].bucket
+  val bucket = entity.getOrNull(caching.cacheInfoIndex)?.bucket ?: ""
   if (bucket.isNotEmpty())
     caching.getBucket(bucket).offer(entity)
 }
@@ -103,7 +105,7 @@ fun WorldData.clearEntitiesToCache() {
   val entities = clearEntities()
   val caching = engine.data.cachingMaybe ?: return
   entities.forEach {
-    val bucket = it[caching.cacheInfoIndex].bucket
+    val bucket = it.getOrNull(caching.cacheInfoIndex)?.bucket ?: ""
     if (bucket.isNotEmpty())
       caching.getBucket(bucket).offer(it)
   }

@@ -12,12 +12,13 @@ import kotlin.reflect.KClass
  * and a bunch of components that are indexed the same across
  * the entire engine.
  */
+@Suppress("UNCHECKED_CAST")
 abstract class Entity(
     val id: Long,
-    val components: MapperList<KClass<*>, Any>
+    val data: MapperList<Any, Any>
 ) {
   init {
-    components.onUpdate = { events?.onUpdate(this) }
+    data.onUpdate = { events?.onUpdate(this) }
   }
 
   protected var events: EntityEvents? = null
@@ -71,15 +72,16 @@ abstract class Entity(
    *
    * @throws IllegalStateException if the component already exists
    */
-  @Suppress("UNCHECKED_CAST")
-  fun <T : Any> add(component: T): T = components.setOrThrow(component::class, component) as T
+  fun <T : Any> add(component: T): T =
+      data.setByKeyOrThrow(component::class, component) as T
 
   /**
    * Adds the given component
    *
    * @throws IllegalStateException if the component already exists
    */
-  fun <T : Any> add(index: MapperIndex<T>, component: T): T = components.setOrThrow(index, component)
+  fun <T : Any> add(index: MapperIndex<T>, component: T): T =
+      data.setByIndexOrThrow(index, component)
 
   /**
    * Gets the component for the given class.
@@ -88,67 +90,82 @@ abstract class Entity(
    *
    * @throws IllegalStateException if the component doesn't exist.
    */
-  @Suppress("UNCHECKED_CAST")
-  operator fun <T : Any> get(type: KClass<T>): T = components[type] as T
+  operator fun <T : Any> get(type: KClass<T>): T =
+      data.getByKey(type) as T
 
   /**
    * Gets the component for the given class.
    *
    * @throws IllegalStateException if the component doesn't exist
    */
-  operator fun <T : Any> get(index: MapperIndex<T>): T = components[index]
+  operator fun <T : Any> get(index: MapperIndex<T>): T =
+      data.getByIndex(index)
 
   /**
    * Attempts to remove the given component. Returns the removed value if any.
    */
-  @Suppress("UNCHECKED_CAST")
-  fun <T : Any> remove(type: KClass<T>): T? = components.unset(type) as T?
+  fun <T : Any> remove(type: KClass<T>): T? =
+      data.unsetByKey(type) as T?
 
   /**
    * Attempts to remove the given component. Returns the removed value if any.
    */
-  fun <T : Any> remove(index: MapperIndex<T>): T? = components.unset(index)
+  fun <T : Any> remove(index: MapperIndex<T>): T? =
+      data.unsetByIndex(index)
 
   /**
    * Gets the value or returns null.
    */
-  @Suppress("UNCHECKED_CAST")
-  fun <T : Any> getOrNull(type: KClass<T>): T? = components.getOrNull(type) as? T
+  fun <T : Any> getOrNull(type: KClass<T>): T? =
+      data.getByKeyOrNull(type) as? T
 
   /**
    * Gets the value or returns null.
    */
-  fun <T : Any> getOrNull(index: MapperIndex<T>): T? = components.getOrNull(index)
+  fun <T : Any> getOrNull(index: MapperIndex<T>): T? =
+      data.getByIndexOrNull(index)
 
   /**
-   * Gets the component or creates a new one with [block] if doesn't exist.
+   * Gets the component or creates a new one with [block] if it doesn't exist.
    */
-  fun <T : Any> getOrAdd(type: KClass<T>, block: () -> T): T {
-    return getOrNull(type) ?: set(block())
-  }
+  fun <T : Any> getOrAdd(type: KClass<T>, block: () -> T): T =
+      getOrNull(type) ?: set(block())
 
   /**
-   * Gets the component or creates a new one with [block] if doesn't exist.
+   * Gets the component or creates a new one with [block] if it doesn't exist.
    */
-  fun <T : Any> getOrAdd(index: MapperIndex<T>, block: () -> T): T {
-    return getOrNull(index) ?: set(block())
-  }
+  fun <T : Any> getOrAdd(index: MapperIndex<T>, block: () -> T): T =
+      getOrNull(index) ?: set(block())
 
-  operator fun <T : Any> set(index: MapperIndex<T>, component: T?): T? = components.set(index, component)
+  /**
+   * Sets the component with the given index.
+   *
+   * @return the [component]
+   */
+  operator fun <T : Any> set(index: MapperIndex<T>, component: T?): T =
+      data.setByIndex(index, component) as T
 
-  fun <T : Any> set(component: T): T = component.also { components[it::class] = it }
+  /**
+   * Sets the component.
+   *
+   * @return the [component]
+   */
+  fun <T : Any> set(component: T): T =
+      component.also { data.setByKey(it::class, it) }
 
   /**
    * Checks if the given component exists.
    *
    * This will cause a component lookup.
    */
-  operator fun <T : Any> contains(type: KClass<T>) = type in components
+  operator fun <T : Any> contains(type: KClass<T>) =
+      data.containsKey(type)
 
   /**
    * Checks if the given component exists.
    */
-  operator fun <T : Any> contains(index: MapperIndex<T>) = index in components
+  operator fun <T : Any> contains(index: MapperIndex<T>) =
+      data.containsIndex(index)
 
   override fun toString(): String {
     if (hasName)
@@ -167,9 +184,11 @@ abstract class Entity(
   }
 }
 
-inline fun <reified T : Any> Entity.getOrAdd(block: () -> T): T {
-  return getOrNull(T::class) ?: set(block())
-}
+/**
+ * Gets the component or creates a new one with [block] if it doesn't exist.
+ */
+inline fun <reified T : Any> Entity.getOrAdd(noinline block: () -> T): T =
+    this.getOrAdd(T::class, block)
 
 /**
  * Gets the component for the given class.
@@ -178,14 +197,16 @@ inline fun <reified T : Any> Entity.getOrAdd(block: () -> T): T {
  *
  * @throws IllegalStateException if the component doesn't exist.
  */
-inline fun <reified T : Any> Entity.get(): T = this[T::class]
+inline fun <reified T : Any> Entity.get(): T =
+    this[T::class]
 
 /**
  * Gets the component for the given class.
  *
  * This will cause a component lookup.
  */
-inline fun <reified T : Any> Entity.getOrNull(): T? = this.getOrNull(T::class)
+inline fun <reified T : Any> Entity.getOrNull(): T? =
+    this.getOrNull(T::class)
 
 /**
  * Creates a string that represents the entity and all of its components.
@@ -199,7 +220,7 @@ fun Entity.debugToString(startDepth: Int = 0): String {
 
   result.prependDepth(0).append(this.toString()).append(": ").append(worldSafe ?: "(no world)")
   var hasComponents = false
-  this.components.forEachNotNull { _, value ->
+  this.data.forEachNotNull { _, value ->
     result.appendLine().prependDepth(2).append(value)
     hasComponents = true
   }
@@ -213,7 +234,8 @@ fun Entity.debugToString(startDepth: Int = 0): String {
  *
  * These methods should only be called by the world.
  */
-class ManagedEntity(id: Long, components: MapperList<KClass<*>, Any>) : Entity(id, components) {
+class ManagedEntity(id: Long, components: MapperList<Any, Any>) : Entity(id, components) {
+
   fun registerToWorld(worldName: String, events: EntityEvents) {
     if (worldSafe != null || this.events != null)
       throw IllegalStateException("$this is already registered to world $worldSafe")

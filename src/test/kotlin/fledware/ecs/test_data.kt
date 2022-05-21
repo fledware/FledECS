@@ -1,13 +1,19 @@
 package fledware.ecs
 
 import fledware.ecs.ex.BlockExecutingSystem
+import fledware.ecs.ex.CachingComponent
 import fledware.ecs.ex.createCachedEntity
 import fledware.ecs.ex.sceneName
 import fledware.ecs.impl.DefaultEngine
 
 data class Placement(var x: Int, var y: Int, var size: Int)
 
-data class Movement(var deltaX: Int, var deltaY: Int)
+data class Movement(var deltaX: Int, var deltaY: Int) : CachingComponent {
+  override fun reset() {
+    deltaX = 0
+    deltaY = 0
+  }
+}
 
 data class Health(var health: Int)
 

@@ -24,7 +24,7 @@ import java.util.BitSet
  * Used by the Engine creator to enable this entity flags extension.
  */
 fun Engine.withEntityFlags(): Engine {
-  data.components.put(EntityFlagsData())
+  data.contexts.put(EntityFlagsData())
   return this
 }
 
@@ -77,7 +77,7 @@ data class FlagIndex(val name: String, val index: Int)
  * @param name the name of the flag.
  */
 fun EngineData.flagIndexOf(name: String) =
-    components.get<EntityFlagsData>().indexOfFlag(name)
+    contexts.get<EntityFlagsData>().indexOfFlag(name)
 
 /**
  * Creates a FlagIndex that will have the same index across the engine.
@@ -85,7 +85,7 @@ fun EngineData.flagIndexOf(name: String) =
  * @param name the name of the flag.
  */
 fun WorldData.flagIndexOf(name: String) =
-    this.world.engine.data.components.get<EntityFlagsData>().indexOfFlag(name)
+    this.world.engine.data.contexts.get<EntityFlagsData>().indexOfFlag(name)
 
 
 // ==================================================================
@@ -103,6 +103,10 @@ class EntityFlags : CachingComponent {
   operator fun contains(index: Int): Boolean = flags[index]
   operator fun plusAssign(index: Int) = exec { flags.set(index) }
   operator fun minusAssign(index: Int) = exec { flags.clear(index) }
+  operator fun get(index: FlagIndex): Boolean = flags[index.index]
+  operator fun contains(index: FlagIndex): Boolean = flags[index.index]
+  operator fun plusAssign(index: FlagIndex) = exec { flags.set(index.index) }
+  operator fun minusAssign(index: FlagIndex) = exec { flags.clear(index.index) }
   override fun reset() = flags.clear()
 }
 
@@ -110,14 +114,34 @@ class EntityFlags : CachingComponent {
  * Returns true if the flag is set.
  */
 operator fun Entity.contains(index: FlagIndex) = flagContains(index)
+
+/**
+ * Ensures the flag is set.
+ *
+ * Automatically calls [Entity.notifyUpdate] if the flag wasn't already set.
+ */
 operator fun Entity.plusAssign(index: FlagIndex) = flagSet(index)
+
+/**
+ * Ensures the flag is not set.
+ *
+ * Automatically calls [Entity.notifyUpdate] if the flag was set.
+ */
 operator fun Entity.minusAssign(index: FlagIndex) = flagClear(index)
 
+/**
+ * Returns true if the flag is set.
+ */
 fun Entity.flagContains(index: FlagIndex): Boolean {
   val flags = this.getOrNull<EntityFlags>() ?: return false
   return index.index in flags
 }
 
+/**
+ * Ensures the flag is set.
+ *
+ * Automatically calls [Entity.notifyUpdate] if the flag wasn't already set.
+ */
 fun Entity.flagSet(index: FlagIndex) {
   val flags = this.getOrAdd { EntityFlags() }
   if (!flags[index.index]) {
@@ -126,6 +150,11 @@ fun Entity.flagSet(index: FlagIndex) {
   }
 }
 
+/**
+ * Ensures the flag is not set.
+ *
+ * Automatically calls [Entity.notifyUpdate] if the flag was set.
+ */
 fun Entity.flagClear(index: FlagIndex) {
   val flags = this.getOrNull<EntityFlags>() ?: return
   if (flags[index.index]) {
@@ -134,6 +163,11 @@ fun Entity.flagClear(index: FlagIndex) {
   }
 }
 
+/**
+ * Clears all flags.
+ *
+ * This will always call [Entity.notifyUpdate].
+ */
 fun Entity.flagClearAll() {
   val flags = this.getOrNull<EntityFlags>() ?: return
   flags.reset()

@@ -125,7 +125,7 @@ class DefaultWorld(override val engine: Engine,
       assertNotUpdating()
       entitiesNamedMutable.clear()
       val result = entitiesMutable.values().toList()
-      result.forEach { it.components.onUpdate = null }
+      result.forEach { it.data.onUpdate = null }
       entitiesMutable.clear()
       entityGroupsMutable.forEachValue { it.clear() }
       events.clearAllEntitiesForRemove()

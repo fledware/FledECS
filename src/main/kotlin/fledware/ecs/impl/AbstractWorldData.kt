@@ -19,7 +19,7 @@ abstract class AbstractWorldData(override val engine: Engine,
                                  override val world: World)
   : WorldData {
 
-  override val components = DefaultTypedMap()
+  override val contexts = DefaultTypedMap()
 
   val entityGroupsMutable = BiDirectionalMap<String, EntityGroupManaged>()
   override val entityGroups: Map<String, EntityGroup> get() = entityGroupsMutable.keyToValue

@@ -1,7 +1,6 @@
 package fledware.ecs.util
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -67,8 +66,8 @@ class BufferedEventListeners1<T : Any>: EventListeners1<T> {
   fun removeEvent(input: T) = exec { buffer.remove(input) }
   fun clear() = exec { buffer.clear(); listeners.clear() }
   fun fire() {
-    while (buffer.isNotEmpty()) {
-      val event = buffer.removeLast()
+    while (true) {
+      val event = buffer.removeLastOrNull() ?: break
       listeners.forEach { it(event) }
     }
   }

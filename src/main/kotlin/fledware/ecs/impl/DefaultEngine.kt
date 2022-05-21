@@ -15,14 +15,12 @@ import fledware.ecs.WorldBuilderDecorator
 import fledware.ecs.WorldManaged
 import fledware.ecs.util.ImmediateEventListeners1
 import fledware.ecs.util.Mapper
-import fledware.ecs.util.MapperIndex
 import fledware.utilities.ConcurrentTypedMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.reflect.KClass
 
 
 /**
@@ -211,14 +209,10 @@ class DefaultEngineEvents : EngineEvents {
  * engine itself.
  */
 open class DefaultEngineData : EngineDataInternal {
-  protected val entityComponentMapper = Mapper<KClass<*>>()
   protected val entityIds = AtomicLong()
   override val worlds = ConcurrentHashMap<String, WorldManaged>()
-  override val components = ConcurrentTypedMap()
-
-  override fun <T : Any> entityComponentIndexOf(clazz: KClass<T>): MapperIndex<T> {
-    return entityComponentMapper.indexOf(clazz)
-  }
+  override val contexts = ConcurrentTypedMap()
+  override val componentMapper = Mapper<Any>()
 
   override fun addWorld(world: WorldManaged) {
     if (worlds.putIfAbsent(world.name, world) != null)
@@ -233,20 +227,20 @@ open class DefaultEngineData : EngineDataInternal {
   }
 
   override fun createEntity(decorator: Entity.() -> Unit): Entity {
-    val result = ManagedEntity(entityIds.incrementAndGet(), entityComponentMapper.list())
+    val result = ManagedEntity(entityIds.incrementAndGet(), componentMapper.list())
     result.decorator()
     return result
   }
 
   override fun start(engine: Engine) {
-    components.values.forEach { (it as? EngineDataLifecycle)?.init(engine) }
+    contexts.values.forEach { (it as? EngineDataLifecycle)?.init(engine) }
   }
 
   override fun shutdown() {
     worlds.values.forEach { it.onDestroy() }
     worlds.clear()
-    components.values.forEach { (it as? EngineDataLifecycle)?.shutdown() }
-    components.clear()
+    contexts.values.forEach { (it as? EngineDataLifecycle)?.shutdown() }
+    contexts.clear()
   }
 }
 

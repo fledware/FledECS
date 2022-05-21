@@ -37,7 +37,7 @@ class GameOfLifeScreen : GameScreen() {
 
   // toggling cells
   private var lastCellToggled: Long = -1
-  private val engineInfo = engine.data.components.get<EngineInfo>()
+  private val engineInfo = engine.data.contexts.get<EngineInfo>()
   private val isEven get() = engineInfo.isEven
   private var isLeftDragging = false
 
@@ -87,7 +87,7 @@ class GameOfLifeScreen : GameScreen() {
   init {
     camera.position.set(absoluteMax / 2f, absoluteMax / 2f, 0f)
     engine.data.forEachWorld { world ->
-      val info = world.data.components.get<WorldInfo>()
+      val info = world.data.contexts.get<WorldInfo>()
       info.bounds.set(
           info.worldX * engineInfo.worldSize * cellSizeF,
           info.worldY * engineInfo.worldSize * cellSizeF,
@@ -179,7 +179,7 @@ class GameOfLifeScreen : GameScreen() {
       shapeRenderer.color = Color.WHITE
       shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
       engine.data.worlds.values.forEach { world ->
-        val info = world.data.components.get<WorldInfo>()
+        val info = world.data.contexts.get<WorldInfo>()
         if (viewportBounds.overlaps(info.bounds)) world.render()
       }
       shapeRenderer.end()
