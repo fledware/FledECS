@@ -1,8 +1,7 @@
 package fledware.ecs
 
-import fledware.ecs.util.MapperIndex
+import fledware.ecs.util.Mapper
 import fledware.utilities.MutableTypedMap
-import kotlin.reflect.KClass
 
 /**
  * All the mutable state of an engine is held here. This
@@ -19,20 +18,18 @@ interface EngineData {
    * The shared components. This can be used for extensions
    * or game data. whatever needs to be global to the entire engine.
    */
-  val components: MutableTypedMap<Any>
+  val contexts: MutableTypedMap<Any>
+
+  /**
+   *
+   */
+  val componentMapper: Mapper<Any>
 
   /**
    * Creates an entity. The ID is guaranteed to be unique
    * to the engine.
    */
   fun createEntity(decorator: Entity.() -> Unit): Entity
-
-  /**
-   * Gets a MapperIndex for the given entity component class.
-   * The index is guaranteed to be the same so all systems can
-   * reference data consistently for all entities.
-   */
-  fun <T : Any> entityComponentIndexOf(clazz: KClass<T>): MapperIndex<T>
 }
 
 /**
@@ -40,6 +37,14 @@ interface EngineData {
  */
 inline fun EngineData.forEachWorld(block: (world: World) -> Unit) =
     worlds.values.forEach(block)
+
+/**
+ * Gets a MapperIndex for the given entity component class.
+ * The index is guaranteed to be the same so all systems can
+ * reference data consistently for all entities.
+ */
+inline fun <reified T : Any> EngineData.componentIndexOf() =
+    componentMapper.indexOf<T>(T::class)
 
 /**
  * The EngineData that includes methods required for
@@ -68,14 +73,6 @@ interface EngineDataInternal : EngineData {
    */
   fun shutdown()
 }
-
-/**
- * Gets a MapperIndex for the given entity component class.
- * The index is guaranteed to be the same so all systems can
- * reference data consistently for all entities.
- */
-inline fun <reified T : Any> EngineData.entityComponentIndexOf() =
-    entityComponentIndexOf(T::class)
 
 /**
  * used when data set in the EngineData needs to be aware

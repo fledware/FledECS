@@ -48,7 +48,7 @@ fun Engine.createWorld(x: Int, y: Int, worldSize: Int) {
  * seeds the engine with all the cells and
  */
 fun Engine.seedCells(worldsCount: Int, worldSize: Int) {
-  data.components.add(EngineInfo(false, worldsCount, worldSize))
+  data.contexts.add(EngineInfo(false, worldsCount, worldSize))
 
   // create all the worlds
   repeat(worldsCount) { worldY ->
@@ -86,7 +86,7 @@ fun Engine.seedCells(worldsCount: Int, worldSize: Int) {
  * Creates all the empty cells for the given world.
  */
 fun World.fillCells() {
-  val info = data.components.get<WorldInfo>()
+  val info = data.contexts.get<WorldInfo>()
   repeat(info.size) { entityY ->
     repeat(info.size) { entityX ->
       data.createCell(
@@ -104,7 +104,7 @@ fun World.fillCells() {
  * are just not added.
  */
 fun World.fillCellNeighbors() {
-  val info = data.components.get<WorldInfo>()
+  val info = data.contexts.get<WorldInfo>()
   val aliveIndex = data.componentIndexOf<CellAlive>()
   data.entities.values().forEach { entity ->
     val (x, y) = entity.get<CellLocation>()

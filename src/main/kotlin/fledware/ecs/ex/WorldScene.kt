@@ -19,7 +19,7 @@ import kotlin.collections.set
 // ==================================================================
 
 fun Engine.withWorldScenes(): Engine {
-  data.components.put(WorldSceneEngineApi(this))
+  data.contexts.put(WorldSceneEngineApi(this))
   addCreateWorldDecorator {
     components.put(WorldSceneData(""))
   }
@@ -27,7 +27,7 @@ fun Engine.withWorldScenes(): Engine {
 }
 
 val EngineData.scenes: WorldSceneEngineApi
-  get() = components.get()
+  get() = contexts.get()
 
 // ==================================================================
 //
@@ -169,7 +169,7 @@ data class WorldSceneData(var name: String)
  * gets the scene data specific to this world
  */
 val WorldData.sceneData: WorldSceneData
-  get() = components.getMaybe() ?: throw IllegalStateException("no scene data found")
+  get() = contexts.getMaybe() ?: throw IllegalStateException("no scene data found")
 
 /**
  * returns the current scene name.

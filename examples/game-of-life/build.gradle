@@ -4,26 +4,44 @@ dependencies {
   api project(":examples:example-runner")
 }
 
+import org.gradle.internal.os.OperatingSystem
+
 task runSmall(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'fledware.examples.gameoflife.MainKt'
   args = [ "2", "50" ]
+
+  if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+		jvmArgs += "-XstartOnFirstThread"
+	}
 }
 
 task runMedium(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'fledware.examples.gameoflife.MainKt'
   args = [ "10", "50" ]
+
+  if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+		jvmArgs += "-XstartOnFirstThread"
+	}
 }
 
 task runLarge(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'fledware.examples.gameoflife.MainKt'
   args = [ "20", "50" ]
+
+  if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+		jvmArgs += "-XstartOnFirstThread"
+	}
 }
 
 task runXLarge(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'fledware.examples.gameoflife.MainKt'
   args = [ "40", "50" ]
+
+  if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+		jvmArgs += "-XstartOnFirstThread"
+	}
 }

@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
- * An abstract to coordinate the work with the main thread.
+ * A simple lock to coordinate the work with the main thread.
  */
 class SimpleWorkLock {
   val exceptions = ConcurrentLinkedQueue<Throwable>()

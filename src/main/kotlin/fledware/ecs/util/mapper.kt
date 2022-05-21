@@ -1,6 +1,8 @@
 package fledware.ecs.util
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 // ==================================================================
 //
@@ -54,6 +56,8 @@ class Mapper<T: Any> {
 
   fun <V: Any> list() = MapperList<T, V>(this)
 
+  fun <V: Any> concurrentList() = ConcurrentMapperList<T, V>(this)
+
   fun <V: Any> indexOf(key: T) = MapperIndex<V>(this[key])
 }
 
@@ -70,7 +74,7 @@ data class MapperIndex<T: Any>(val index: Int)
  * with arrays that index based on the values.
  */
 @Suppress("UNCHECKED_CAST")
-class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
+open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
   // The data that holds all the objects. This is left public
   // so others can do crazy things if they feel like it.
   var data = Array<Any?>(mapper.size) { null }
@@ -89,80 +93,108 @@ class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
     fireOnUpdate()
   }
 
-  operator fun get(index: Int): V = getOrNull(index)
+  protected open fun grow() {
+    data = data.copyOf(mapper.size)
+  }
+
+  fun getByIndex(index: Int): V = getByIndexOrNull(index)
           ?: throw IndexOutOfBoundsException("index not found: $index => ${mapper.reverseLookup(index)}")
 
-  fun getOrNull(index: Int): V? = if (index in data.indices) data[index] as V? else null
+  fun getByIndexOrNull(index: Int): V? =
+      if (index in data.indices) data[index] as V? else null
 
-  fun getOrDefault(index: Int, default: V): V = getOrNull(index) ?: default
+  fun getByIndexOrDefault(index: Int, default: V): V =
+      getByIndexOrNull(index) ?: default
 
-  fun getOrSet(index: Int, default: V): V = getOrNull(index) ?: set(index, default)!!
+  fun getByIndexOrSet(index: Int, default: V): V =
+      getByIndexOrNull(index) ?: setByIndex(index, default)!!
 
-  fun getOrCreate(index: Int, block: () -> V): V = getOrNull(index) ?: set(index, block())!!
-
-
-  operator fun get(key: K): V = get(mapper[key])
-
-  fun getOrNull(key: K): V? = getOrNull(mapper[key])
-
-  fun getOrDefault(key: K, default: V): V = getOrDefault(mapper[key], default)
-
-  fun getOrSet(key: K, default: V): V = getOrSet(mapper[key], default)
-
-  fun getOrCreate(key: K, block: () -> V): V = getOrCreate(mapper[key], block)
+  fun getByIndexOrCreate(index: Int, block: () -> V): V =
+      getByIndexOrNull(index) ?: setByIndex(index, block())!!
 
 
-  operator fun <T: V> get(index: MapperIndex<T>): T = get(index.index) as T
+  fun <T: V> getByIndex(index: MapperIndex<T>): T =
+      getByIndex(index.index) as T
 
-  fun <T: V> getOrNull(index: MapperIndex<T>): T? = getOrNull(index.index) as T?
+  fun <T: V> getByIndexOrNull(index: MapperIndex<T>): T? =
+      getByIndexOrNull(index.index) as T?
 
-  fun <T: V> getOrDefault(index: MapperIndex<T>, default: T): T = getOrDefault(index.index, default) as T
+  fun <T: V> getByIndexOrDefault(index: MapperIndex<T>, default: T): T =
+      getByIndexOrDefault(index.index, default) as T
 
-  fun <T: V> getOrSet(index: MapperIndex<T>, default: T): T = getOrSet(index.index, default) as T
+  fun <T: V> getByIndexOrSet(index: MapperIndex<T>, default: T): T =
+      getByIndexOrSet(index.index, default) as T
 
-  fun <T: V> getOrCreate(index: MapperIndex<T>, block: () -> T): T = getOrCreate(index.index, block) as T
-
-
-  operator fun contains(index: Int): Boolean = getOrNull(index) != null
-
-  operator fun contains(key: K): Boolean = getOrNull(key) != null
-
-  operator fun contains(index: MapperIndex<*>): Boolean = getOrNull(index.index) != null
+  fun <T: V> getByIndexOrCreate(index: MapperIndex<T>, block: () -> T): T =
+      getByIndexOrCreate(index.index, block) as T
 
 
-  operator fun set(index: Int, value: V?): V? {
-    if (index !in data.indices) {
-      data = data.copyOf(mapper.size)
-    }
+  fun getByKey(key: K): V =
+      getByIndex(mapper[key])
+
+  fun getByKeyOrNull(key: K): V? =
+      getByIndexOrNull(mapper[key])
+
+  fun getByKeyOrDefault(key: K, default: V): V =
+      getByIndexOrDefault(mapper[key], default)
+
+  fun getByKeyOrSet(key: K, default: V): V =
+      getByIndexOrSet(mapper[key], default)
+
+  fun getByKeyOrCreate(key: K, block: () -> V): V =
+      getByIndexOrCreate(mapper[key], block)
+
+
+  fun containsIndex(index: Int): Boolean =
+      getByIndexOrNull(index) != null
+
+  fun containsKey(key: K): Boolean =
+      getByKeyOrNull(key) != null
+
+  fun containsIndex(index: MapperIndex<*>): Boolean =
+      getByIndexOrNull(index.index) != null
+
+
+  fun setByIndex(index: Int, value: V?): V? {
+    if (index !in data.indices)
+      grow()
     data[index] = value
     fireOnUpdate()
     return value
   }
 
-  fun setIfNull(index: Int, value: V): V {
-    return getOrNull(index) ?: set(index, value)!!
+  fun setByIndexIfNull(index: Int, value: V): V {
+    return getByIndexOrNull(index) ?: setByIndex(index, value)!!
   }
 
-  fun setOrThrow(index: Int, value: V): V {
-    if (index in this)
+  fun setByIndexOrThrow(index: Int, value: V): V {
+    if (this.containsIndex(index))
       throw IllegalStateException("already set: ${mapper.reverseLookup(index)} => $index")
-    return set(index, value)!!
+    return setByIndex(index, value)!!
   }
 
-  operator fun set(key: K, value: V?): V? = set(mapper[key], value)
 
-  fun setIfNull(key: K, value: V): V = setIfNull(mapper[key], value)
+  fun <T: V> setByIndex(index: MapperIndex<T>, value: T?): T? =
+      setByIndex(index.index, value) as T?
 
-  fun setOrThrow(key: K, value: V): V = setOrThrow(mapper[key], value)
+  fun <T: V> setByIndexIfNull(index: MapperIndex<T>, value: T): T =
+      setByIndexIfNull(index.index, value) as T
 
-  operator fun <T: V> set(index: MapperIndex<T>, value: T?): T? = set(index.index, value) as T?
-
-  fun <T: V> setIfNull(index: MapperIndex<T>, value: T): T = setIfNull(index.index, value) as T
-
-  fun <T: V> setOrThrow(index: MapperIndex<T>, value: T): T = setOrThrow(index.index, value) as T
+  fun <T: V> setByIndexOrThrow(index: MapperIndex<T>, value: T): T =
+      setByIndexOrThrow(index.index, value) as T
 
 
-  fun unset(index: Int): V? {
+  fun setByKey(key: K, value: V?): V? =
+      setByIndex(mapper[key], value)
+
+  fun setByKeyIfNull(key: K, value: V): V =
+      setByIndexIfNull(mapper[key], value)
+
+  fun setByKeyOrThrow(key: K, value: V): V =
+      setByIndexOrThrow(mapper[key], value)
+
+
+  fun unsetByIndex(index: Int): V? {
     if (index !in data.indices) {
       return null
     }
@@ -171,9 +203,9 @@ class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
     return result as V
   }
 
-  fun unset(key: K): V? = unset(mapper[key])
+  fun unsetByKey(key: K): V? = unsetByIndex(mapper[key])
 
-  fun <T: V> unset(index: MapperIndex<T>): T? = unset(index.index) as T?
+  fun <T: V> unsetByIndex(index: MapperIndex<T>): T? = unsetByIndex(index.index) as T?
 }
 
 inline fun <K: Any, V: Any> MapperList<K, V>.forEach(block: (key: K, value: V?) -> Unit) {
@@ -191,4 +223,10 @@ inline fun <K: Any, V: Any> MapperList<K, V>.forEachNotNull(block: (key: K, valu
     @Suppress("UNCHECKED_CAST")
     block(key, notNullValue as V)
   }
+}
+
+class ConcurrentMapperList<K: Any, V: Any>(mapper: Mapper<K>) : MapperList<K, V>(mapper) {
+  private val growLock = ReentrantLock()
+
+  override fun grow() = growLock.withLock { super.grow() }
 }

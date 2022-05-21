@@ -6,7 +6,7 @@ import fledware.ecs.componentIndexOf
 import fledware.utilities.get
 
 class GameOfLifeSystem : GroupIteratorSystem("cells") {
-  private val engineInfo by lazy { engine.data.components.get<EngineInfo>() }
+  private val engineInfo by lazy { engine.data.contexts.get<EngineInfo>() }
   private val cellAliveIndex by lazy { data.componentIndexOf<CellAlive>() }
   private val cellNeighborsIndex by lazy { data.componentIndexOf<CellNeighbors>() }
 

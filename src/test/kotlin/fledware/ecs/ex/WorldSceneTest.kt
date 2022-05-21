@@ -19,7 +19,7 @@ class WorldSceneTest {
     val world = engine.createTestWorld()
     engine.update(1f)
 
-    assertEquals(1, world.data.components.size)
+    assertEquals(1, world.data.contexts.size)
     assertEquals(3, world.data.entities.size())
     world.data.createEntity {  }
     engine.update(1f)
@@ -33,7 +33,7 @@ class WorldSceneTest {
     engine.update(1f)
 
     world.data.sceneName = "hello"
-    assertEquals(1, world.data.components.size)
+    assertEquals(1, world.data.contexts.size)
     assertEquals(3, world.data.entities.size())
 
     val scene = world.data.clearScene()

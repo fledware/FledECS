@@ -19,8 +19,11 @@ class EntityCachingTest {
     assertTrue(world.data.entities.containsKey(person.id))
 
     val personId = person.id
+    assertEquals(0, engine.data.caching.getBucket("person").size)
     world.data.removeEntityToCache(person)
+    assertEquals(1, engine.data.caching.getBucket("person").size)
     val personOther = world.data.createPersonEntity(2, 2)
+    assertEquals(0, engine.data.caching.getBucket("person").size)
 
     assertEquals(personId, personOther.id)
   }

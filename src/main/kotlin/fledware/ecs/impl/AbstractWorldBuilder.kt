@@ -8,7 +8,10 @@ import fledware.ecs.WorldManaged
 import fledware.utilities.DefaultTypedMap
 import fledware.utilities.MutableTypedMap
 
-
+/**
+ * The standard datastructures that will likely be needed
+ * for building a world.
+ */
 abstract class AbstractWorldBuilder(final override val engine: Engine,
                                     override var name: String,
                                     override var options: Any?)
@@ -47,7 +50,7 @@ abstract class AbstractWorldBuilder(final override val engine: Engine,
 
   final override fun build(): WorldManaged {
     // we should not be reusing entity or system instances, so once
-    // the world is created, we dont want to reuse this builder.
+    // the world is created, we don't want to reuse this builder.
     if (builderFinished)
       throw IllegalStateException("builder already used")
     builderFinished = true
