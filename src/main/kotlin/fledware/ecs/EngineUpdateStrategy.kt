@@ -48,11 +48,6 @@ interface EngineUpdateStrategy {
   fun unregisterWorld(world: WorldManaged)
 
   /**
-   * sets the context used for any thread that is created
-   */
-  fun setThreadContext(context: ClassLoader)
-
-  /**
    * lets the strategy know to initialize anything it needs
    * to start performing updates.
    */

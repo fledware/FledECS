@@ -90,10 +90,6 @@ class DefaultWorldUpdateStrategy(private val burstJobPool: BurstJobPool)
     worldsOrdered.clear()
   }
 
-  override fun setThreadContext(context: ClassLoader) {
-    burstJobPool.setContext(context)
-  }
-
   override fun start(engine: Engine) {
     burstJobPool.start()
   }
