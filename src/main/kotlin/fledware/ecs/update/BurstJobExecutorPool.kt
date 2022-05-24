@@ -10,12 +10,9 @@ class BurstJobExecutorPool(val executor: ExecutorService,
                            val ownsExecutor: Boolean)
   : BurstJobPool {
 
-  private var context: ClassLoader? = null
   private val workLock = SimpleWorkLock()
 
   override fun createJobFor(block: () -> Unit) = BurstJob {
-    if (context != null)
-      Thread.currentThread().contextClassLoader = context
     workLock.executeAndCount(block)
   }
 
@@ -23,10 +20,6 @@ class BurstJobExecutorPool(val executor: ExecutorService,
     workLock.reset(jobs.size)
     jobs.forEach { executor.execute(it.jobBlock) }
     workLock.awaitWork()
-  }
-
-  override fun setContext(context: ClassLoader) {
-    this.context = context
   }
 
   override fun start() {

@@ -6,7 +6,6 @@ package fledware.ecs.update
 interface BurstJobPool {
   fun createJobFor(block: () -> Unit): BurstJob
   fun execute(jobs: List<BurstJob>)
-  fun setContext(context: ClassLoader)
   fun start()
   fun shutdown()
 }
