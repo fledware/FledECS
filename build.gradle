@@ -7,8 +7,8 @@ buildscript {
     slf4jVersion="1.7.36"
     fledUtilsVersion="0.1.2"
     eclipseCollectionsVersion="10.4.0"
-    gdxVersion="1.10.0"
-    ktxVersion="1.10.0-rc1"
+    gdxVersion="1.11.0"
+    ktxVersion="1.11.0-rc1"
     log4jVersion="2.17.2"
   }
 
