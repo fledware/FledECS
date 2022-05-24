@@ -8,7 +8,7 @@ buildscript {
     fledUtilsVersion="0.1.2"
     eclipseCollectionsVersion="10.4.0"
     gdxVersion="1.10.0"
-    ktxVersion="1.10.0-rc1"
+    ktxVersion="1.11.0-SNAPSHOT"
     log4jVersion="2.17.0"
   }
 
