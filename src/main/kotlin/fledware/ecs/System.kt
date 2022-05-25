@@ -44,17 +44,15 @@ interface System {
  * A basic abstract system. this just holds world/data
  * in variables.
  */
-abstract class AbstractSystem : System {
+abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System {
   /**
-   * Implementation of enabled where [onEnabled] and
-   * [onDisabled] methods are called. The setter does
-   * not check the previous value and will always call
-   * [onEnabled] when set to true and [onDisabled] when
-   * set to false.
+   * Implementation of enabled where [onEnabled] and [onDisabled] methods
+   * are called. The setter does not check the previous value and will
+   * always call [onEnabled] when set to true and [onDisabled] when set to false.
    *
-   * [onEnabled] is not called during [onCreate].
+   * [onEnabled] or [onDisabled] is called during [onCreate].
    */
-  override var enabled: Boolean = true
+  override var enabled: Boolean = enabled
     set(value) {
       field = value
       if (value)
@@ -69,34 +67,46 @@ abstract class AbstractSystem : System {
    * When setting this value, it automatically calls [WorldData.clearCaches]
    * to force a reindex and sorting of the world systems.
    */
-  override var order: Int = 0
+  override var order: Int = order
     set(value) {
       field = value
-      data.clearCaches()
+      dataSafe?.clearCaches()
     }
+
+  private var engineSafe: Engine? = null
+  private var worldSafe: World? = null
+  private var dataSafe: WorldData? = null
 
   /**
    * the engine that manages this system
    */
-  lateinit var engine: Engine
-    private set
+  val engine: Engine get() = engineSafe
+      ?: throw IllegalStateException("onCreate must be called first")
 
   /**
    * the world that manages this system
    */
-  lateinit var world: World
-    private set
+  val world: World get() = worldSafe
+      ?: throw IllegalStateException("onCreate must be called first")
+
   /**
-   * the data of the world that manages this system
+   * The data of the world that manages this system.
+   *
+   * This allows access to [World.data] without the update
+   * protection check.
    */
-  lateinit var data: WorldData
-    private set
+  val data: WorldData get() = dataSafe
+      ?: throw IllegalStateException("onCreate must be called first")
 
   override fun onCreate(world: World, data: WorldData) {
     super.onCreate(world, data)
-    this.engine = world.engine
-    this.world = world
-    this.data = data
+    this.engineSafe = world.engine
+    this.worldSafe = world
+    this.dataSafe = data
+    if (enabled)
+      onEnabled()
+    else
+      onDisabled()
   }
 
   /**
