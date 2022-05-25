@@ -1,13 +1,16 @@
 package fledware.ecs
 
 import fledware.ecs.ex.BlockExecutingSystem
+import fledware.ecs.ex.InitSystem
 import fledware.ecs.ex.execute
+import fledware.ecs.ex.initWith
 import fledware.ecs.impl.AbstractWorldData
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class WorldTest {
@@ -215,5 +218,20 @@ class WorldTest {
       assertIs<BlockExecutingSystem>(systems[0])
       assertIs<MovementSystem>(systems[1])
     }
+  }
+
+  @Test
+  fun systemCanRemoveSelfAfterCreate() {
+    var yayISay: String? = null
+    val engine = createTestEngine()
+    val world = engine.createWorldAndFlush("test") {
+      worldBuilderMovementOnly()
+      initWith { _, _ ->
+        yayISay = "yay!!!"
+      }
+    }
+
+    assertEquals("yay!!!", yayISay)
+    assertNull(world.data.systems.getMaybe<InitSystem>())
   }
 }

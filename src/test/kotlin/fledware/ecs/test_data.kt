@@ -49,7 +49,21 @@ class MovementSystem : UpdateCountSystem() {
 
 class UpdateCountSystemNotMovement : UpdateCountSystem()
 
-open class UpdateCountSystem : AbstractSystem() {
+class SomeSystemA(enabled: Boolean = true, order: Int = 0)
+  : UpdateCountSystem(enabled, order)
+
+class SomeSystemB(enabled: Boolean = true, order: Int = 0)
+  : UpdateCountSystem(enabled, order)
+
+class SomeSystemC(enabled: Boolean = true, order: Int = 0)
+  : UpdateCountSystem(enabled, order)
+
+class SomeSystemD(enabled: Boolean = true, order: Int = 0)
+  : UpdateCountSystem(enabled, order)
+
+open class UpdateCountSystem(enabled: Boolean = true,
+                             order: Int = 0)
+  : AbstractSystem(enabled, order) {
   var onDestroyCount = 0
   var onCreateCount = 0
   var onEnabledCount = 0

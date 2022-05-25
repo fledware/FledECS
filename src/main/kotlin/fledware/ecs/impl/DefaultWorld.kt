@@ -224,15 +224,22 @@ class DefaultWorld(override val engine: Engine,
   }
 
   private fun handleSystemUpdates() {
-    while (true) {
-      val system = _data.systemsToCreate.removeFirstOrNull() ?: break
-      system.onCreate(this, _data)
-      events.onSystemAdded(system)
-    }
-    while (true) {
-      val system = _data.systemsToRemove.removeFirstOrNull() ?: break
-      system.onDestroy()
-      events.onSystemRemoved(system)
+    // states can change during the create/remove process, this
+    // way we can ensure this world is in a known state before
+    // any other updates or events happen
+    while (_data.systemsToCreate.isNotEmpty() || _data.systemsToRemove.isNotEmpty()) {
+      _data.systemsToCreate.sortBy { it.order }
+      while (true) {
+        val system = _data.systemsToCreate.removeFirstOrNull() ?: break
+        system.onCreate(this, _data)
+        events.onSystemAdded(system)
+      }
+      _data.systemsToRemove.sortBy { it.order }
+      while (true) {
+        val system = _data.systemsToRemove.removeFirstOrNull() ?: break
+        system.onDestroy()
+        events.onSystemRemoved(system)
+      }
     }
   }
 
