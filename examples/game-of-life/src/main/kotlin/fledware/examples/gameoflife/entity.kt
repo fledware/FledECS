@@ -39,7 +39,7 @@ fun EntityFactory.createCell(x: Int, y: Int) = createEntity {
  */
 fun Engine.createWorld(x: Int, y: Int, worldSize: Int) {
   requestCreateWorld("$x,$y") {
-    components.put(WorldInfo(x, y, worldSize))
+    contexts.put(WorldInfo(x, y, worldSize))
     addSystem(GameOfLifeSystem())
   }
 }

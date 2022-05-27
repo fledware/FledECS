@@ -24,7 +24,7 @@ interface WorldBuilder : EntityFactory {
   /**
    * Components to be added to [WorldData.contexts]
    */
-  val components: MutableTypedMap<Any>
+  val contexts: MutableTypedMap<Any>
   /**
    * All systems created for the world so far.
    */

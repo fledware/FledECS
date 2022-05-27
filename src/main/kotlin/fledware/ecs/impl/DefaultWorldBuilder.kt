@@ -15,7 +15,7 @@ class DefaultWorldBuilder(engine: Engine,
 
   override fun actualBuild(): WorldManaged {
     val result = DefaultWorld(engine, name, updateGroup, options)
-    components.values.forEach { result.data.contexts.put(it) }
+    contexts.values.forEach { result.data.contexts.put(it) }
     systems.forEach { result.data.addSystem(it) }
     entities.forEach { result.receiveEntity(it) }
     entityGroups.forEach { result.data.createEntityGroup(it.key, it.value) }
