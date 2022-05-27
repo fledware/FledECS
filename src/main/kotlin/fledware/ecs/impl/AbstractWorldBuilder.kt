@@ -21,7 +21,7 @@ abstract class AbstractWorldBuilder(final override val engine: Engine,
   override val entities = mutableListOf<Entity>()
   override val entitiesNamed = mutableMapOf<String, Entity>()
   override val entityGroups = mutableMapOf<String, (Entity) -> Boolean>()
-  override val components: MutableTypedMap<Any> = DefaultTypedMap()
+  override val contexts: MutableTypedMap<Any> = DefaultTypedMap()
   var builderFinished = false
     private set
 
