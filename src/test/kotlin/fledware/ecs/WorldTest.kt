@@ -232,6 +232,6 @@ class WorldTest {
     }
 
     assertEquals("yay!!!", yayISay)
-    assertNull(world.data.systems.getMaybe<InitSystem>())
+    assertNull(world.data.systems.getOrNull<InitSystem>())
   }
 }

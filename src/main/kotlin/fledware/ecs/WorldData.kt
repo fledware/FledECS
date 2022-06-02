@@ -129,9 +129,9 @@ inline fun <reified T : Any> WorldData.componentIndexOf() =
 
 inline fun <reified T : System> TypedMap<System>.get() = get(T::class)
 
-inline fun <reified T : System> TypedMap<System>.getMaybe() = getMaybe(T::class)
+inline fun <reified T : System> TypedMap<System>.getOrNull() = getOrNull(T::class)
 
 inline fun <reified T : System> TypedMap<System>.getExact() = getExact(T::class)
 
-inline fun <reified T : System> TypedMap<System>.getExactMaybe() = getExactMaybe(T::class)
+inline fun <reified T : System> TypedMap<System>.getExactOrNull() = getExactOrNull(T::class)
 

@@ -5,7 +5,7 @@ buildscript {
     coroutineVersion="1.6.2"
     junitVersion="5.8.2"
     slf4jVersion="1.7.36"
-    fledUtilsVersion="0.1.2"
+    fledUtilsVersion="0.1.5-SNAPSHOT"
     eclipseCollectionsVersion="11.0.0"
     gdxVersion="1.11.0"
     ktxVersion="1.11.0-rc1"
