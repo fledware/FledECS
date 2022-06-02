@@ -218,6 +218,10 @@ class DefaultWorld(override val engine: Engine,
   }
 
   override fun onCreate() {
+    while (true) {
+      val entity = entitiesToReceive.poll() ?: break
+      entityReceive(entity)
+    }
     handleSystemUpdates()
     handlerExternalMessages()
     events.fireAllEvents()

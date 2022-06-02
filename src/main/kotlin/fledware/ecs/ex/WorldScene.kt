@@ -7,7 +7,7 @@ import fledware.ecs.EntityFactory
 import fledware.ecs.WorldBuilder
 import fledware.ecs.WorldData
 import fledware.utilities.get
-import fledware.utilities.getMaybe
+import fledware.utilities.getOrNull
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 
@@ -80,7 +80,7 @@ data class WorldSceneEngineApi(private val engine: Engine) {
    * removes a saved scene and returns it.
    */
   fun removeSavedScene(name: String): Scene {
-    return removeSavedSceneMaybe(name)
+    return removeSavedSceneOrNull(name)
         ?: throw IllegalStateException("no saved scene with name: $name")
   }
 
@@ -88,7 +88,7 @@ data class WorldSceneEngineApi(private val engine: Engine) {
    * variant of removeSavedScene that will return null if a saved scene with
    * the given name doesn't exist.
    */
-  fun removeSavedSceneMaybe(name: String): Scene? {
+  fun removeSavedSceneOrNull(name: String): Scene? {
     return savedScenes.remove(name)
   }
 }
@@ -132,7 +132,7 @@ class SceneFactory(override val engine: Engine,
  * gets the scene data specific to this world
  */
 val WorldBuilder.sceneData: WorldSceneData
-  get() = contexts.getMaybe() ?: throw IllegalStateException("no scene data found")
+  get() = contexts.getOrNull() ?: throw IllegalStateException("no scene data found")
 
 /**
  * returns the current scene name.
@@ -146,7 +146,7 @@ var WorldBuilder.sceneName: String
   }
 
 val WorldBuilder.isWorldSceneEnabled: Boolean
-  get() = contexts.getMaybe<WorldSceneData>() != null
+  get() = contexts.getOrNull<WorldSceneData>() != null
 
 // ==================================================================
 //
@@ -169,7 +169,7 @@ data class WorldSceneData(var name: String)
  * gets the scene data specific to this world
  */
 val WorldData.sceneData: WorldSceneData
-  get() = contexts.getMaybe() ?: throw IllegalStateException("no scene data found")
+  get() = contexts.getOrNull() ?: throw IllegalStateException("no scene data found")
 
 /**
  * returns the current scene name.

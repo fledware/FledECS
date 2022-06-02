@@ -10,7 +10,7 @@ import fledware.ecs.getOrAdd
 import fledware.ecs.getOrNull
 import fledware.ecs.util.MapperIndex
 import fledware.utilities.get
-import fledware.utilities.getMaybe
+import fledware.utilities.getOrNull
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.max
@@ -73,8 +73,8 @@ interface CachingComponent {
 val EngineData.caching: EntityCaching
   get() = contexts.get()
 
-val EngineData.cachingMaybe: EntityCaching?
-  get() = contexts.getMaybe()
+val EngineData.cachingOrNull: EntityCaching?
+  get() = contexts.getOrNull()
 
 
 // ==================================================================
@@ -84,7 +84,7 @@ val EngineData.cachingMaybe: EntityCaching?
 // ==================================================================
 
 fun EntityFactory.createCachedEntity(bucket: String, onCreateDecorator: Entity.() -> Unit): Entity {
-  val caching = engine.data.cachingMaybe
+  val caching = engine.data.cachingOrNull
   val result = caching?.getBucket(bucket)?.take()
       ?: engine.data.createEntity(onCreateDecorator)
   if (caching != null && caching.cacheInfoIndex !in result)
@@ -95,7 +95,7 @@ fun EntityFactory.createCachedEntity(bucket: String, onCreateDecorator: Entity.(
 
 fun WorldData.removeEntityToCache(entity: Entity) {
   removeEntity(entity)
-  val caching = engine.data.cachingMaybe ?: return
+  val caching = engine.data.cachingOrNull ?: return
   val bucket = entity.getOrNull(caching.cacheInfoIndex)?.bucket ?: ""
   if (bucket.isNotEmpty())
     caching.getBucket(bucket).offer(entity)
@@ -103,7 +103,7 @@ fun WorldData.removeEntityToCache(entity: Entity) {
 
 fun WorldData.clearEntitiesToCache() {
   val entities = clearEntities()
-  val caching = engine.data.cachingMaybe ?: return
+  val caching = engine.data.cachingOrNull ?: return
   entities.forEach {
     val bucket = it.getOrNull(caching.cacheInfoIndex)?.bucket ?: ""
     if (bucket.isNotEmpty())
