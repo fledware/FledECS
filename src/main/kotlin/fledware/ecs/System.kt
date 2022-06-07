@@ -109,6 +109,12 @@ abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System 
       onDisabled()
   }
 
+  override fun onDestroy() {
+    super.onDestroy()
+    if (enabled)
+      enabled = false
+  }
+
   /**
    * called when enabled is set to true.
    */
