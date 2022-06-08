@@ -111,7 +111,7 @@ class DefaultWorld(override val engine: Engine,
 
     override fun removeEntityGroup(name: String) {
       val group = entityGroupsMutable.removeKey(name)
-          ?: throw IllegalStateException("group not managed by this world: $name")
+          ?: throw IllegalStateException("group not found in this world: $name")
       group.finished()
     }
 
@@ -119,6 +119,11 @@ class DefaultWorld(override val engine: Engine,
       val name = entityGroupsMutable.getKey(group as EntityGroupManaged)
           ?: throw IllegalStateException("group not managed by this world: $group")
       removeEntityGroup(name)
+    }
+
+    override fun getEntityGroup(name: String): EntityGroup {
+      return entityGroupsMutable.getValue(name)
+          ?: throw IllegalStateException("group not found in this world: $name")
     }
 
     override fun clearEntities(): List<Entity> {

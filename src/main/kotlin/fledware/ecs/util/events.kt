@@ -24,6 +24,8 @@ class ImmediateEventListeners0 : EventListeners0 {
 class BufferedEventListeners0 : EventListeners0 {
   val buffer = AtomicBoolean(false)
   val listeners = ConcurrentHashMap.newKeySet<() -> Unit>()!!
+  @Volatile
+  var freezeFire = false
   override fun add(listener: () -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: () -> Unit) = exec { listeners.remove(listener) }
   override operator fun plusAssign(listener: () -> Unit) = exec { listeners.add(listener) }
@@ -31,6 +33,8 @@ class BufferedEventListeners0 : EventListeners0 {
   operator fun invoke() = exec { buffer.set(false) }
   fun clear() = exec { listeners.clear() }
   fun fire() {
+    if (freezeFire)
+      return
     if (buffer.compareAndSet(true, false)) {
       listeners.forEach { it() }
     }
