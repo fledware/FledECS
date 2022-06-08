@@ -33,7 +33,10 @@ open class DefaultEntityGroup(private val include: (entity: Entity) -> Boolean)
   }
 
   override fun clear() {
-    entityUniqueList.clear()
+    if (entityUniqueList.isNotEmpty()) {
+      entityUniqueList.clear()
+      onChange()
+    }
   }
 
   override fun finished() {

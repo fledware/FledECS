@@ -47,13 +47,22 @@ interface WorldData : EntityFactory {
   val entityGroups: Map<String, EntityGroup>
 
   /**
-   * adds a system to this world data. This will automatically
+   * adds a system to this world data. This will not automatically
    * enable the system.
+   *
+   * This will call [System.onCreate] at the beginning of the
+   * next frame.
+   *
+   * @param system the system to add
+   * @throws IllegalStateException if this system type already exists
    */
   fun addSystem(system: System)
 
   /**
+   * Removes the given system by type.
    *
+   * @see [MutableTypedMap.remove]
+   * @param key the type to remove
    */
   fun <S : System> removeSystem(key: KClass<S>)
 
@@ -66,6 +75,7 @@ interface WorldData : EntityFactory {
    *
    * @param name the name of the group
    * @param include checks entity on if it should be included in the given group
+   * @throws IllegalStateException if the group name already exists
    * @return the created entity group
    */
   fun createEntityGroup(name: String = "", include: (entity: Entity) -> Boolean): EntityGroup
@@ -73,14 +83,28 @@ interface WorldData : EntityFactory {
   /**
    * removes an entity group with the given name.
    * This will not remove entities.
+   *
+   * @param name the name of the entity group
+   * @throws IllegalStateException if the group does not exist
    */
   fun removeEntityGroup(name: String)
 
   /**
    * Removes the given entity group.
    * This will not remove entities.
+   *
+   * @param group the entity group to remove
+   * @throws IllegalStateException if the group is not managed by this world
    */
   fun removeEntityGroup(group: EntityGroup)
+
+  /**
+   * Returns the [EntityGroup] with [name].
+   *
+   * @param name the name of the entity group
+   * @throws IllegalStateException if the entity group doesn't exist
+   */
+  fun getEntityGroup(name: String): EntityGroup
 
   /**
    * quickly clears _all_ entities without causing events or extra processing.
@@ -96,16 +120,24 @@ interface WorldData : EntityFactory {
    *
    * The entity is not actually cleaned as is safe to reuse
    * after this method returns.
+   *
+   * @param entity the entity to remove from this world
    */
   fun removeEntity(entity: Entity)
 
   /**
    * send an entity to the given world
+   *
+   * @param world the world to send the entity to
+   * @param entity the entity to send to the world
    */
   fun sendEntity(world: String, entity: Entity)
 
   /**
    * send a message to the given world
+   *
+   * @param world the world to send the message to
+   * @param message the message to send to the world
    */
   fun sendMessage(world: String, message: Any)
 
