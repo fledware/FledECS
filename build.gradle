@@ -6,7 +6,7 @@ buildscript {
     junitVersion="5.8.2"
     slf4jVersion="1.7.36"
     fledUtilsVersion="0.1.5-SNAPSHOT"
-    eclipseCollectionsVersion="11.0.0"
+    eclipseCollectionsVersion="11.1.0"
     gdxVersion="1.11.0"
     ktxVersion="1.11.0-rc1"
     log4jVersion="2.18.0"
