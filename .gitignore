@@ -1,6 +1,7 @@
 .idea
 .gradle
 build
+examples/example-runner/out/
 
 # Compiled class file
 *.class

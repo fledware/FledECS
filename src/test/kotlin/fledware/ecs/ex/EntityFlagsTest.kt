@@ -1,18 +1,31 @@
 package fledware.ecs.ex
 
+import fledware.ecs.Engine
 import fledware.ecs.Entity
 import fledware.ecs.EntityEvents
 import fledware.ecs.ManagedEntity
 import fledware.ecs.createTestEngine
-import kotlin.test.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class EntityFlagsTest {
-  @Test
-  fun testHappyPath() {
-    val engine = createTestEngine().withEntityFlags()
+  companion object {
+    @JvmStatic
+    fun engineConfigurations(): Stream<Arguments> = Stream.of(
+        Arguments.of("memory-index", { createTestEngine().withEntityFlags() }),
+        Arguments.of("static-index", { createTestEngine().withEntityFlags().withStaticEngineContext() })
+    )
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  fun testHappyPath(name: String, engineFactory: () -> Engine) {
+    val engine = engineFactory()
     val entity = engine.data.createEntity { }
     val flagOne = engine.data.flagIndexOf("FlagOne")
 
@@ -27,9 +40,10 @@ class EntityFlagsTest {
     assertFalse(flagOne in entity)
   }
 
-  @Test
-  fun testClear() {
-    val engine = createTestEngine().withEntityFlags()
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  fun testClear(name: String, engineFactory: () -> Engine) {
+    val engine = engineFactory()
     val entity = engine.data.createEntity { }
     val flagOne = engine.data.flagIndexOf("FlagOne")
     entity += flagOne
@@ -38,9 +52,10 @@ class EntityFlagsTest {
     assertFalse(flagOne in entity)
   }
 
-  @Test
-  fun testLostOfFlagsAreSeparate() {
-    val engine = createTestEngine().withEntityFlags()
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  fun testLostOfFlagsAreSeparate(name: String, engineFactory: () -> Engine) {
+    val engine = engineFactory()
     val entity = engine.data.createEntity { }
     val flags = (0..1000).map { engine.data.flagIndexOf("SomeFlag$it") }
     flags.forEach { testing ->
@@ -60,9 +75,10 @@ class EntityFlagsTest {
     })
   }
 
-  @Test
-  fun testNotifyUpdateCorrectForSet() {
-    val engine = createTestEngine().withEntityFlags()
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  fun testNotifyUpdateCorrectForSet(name: String, engineFactory: () -> Engine) {
+    val engine = engineFactory()
     val entity = engine.data.createEntity { }
     var eventCount = 0
     entity.entityNotification { eventCount++ }
@@ -78,9 +94,10 @@ class EntityFlagsTest {
     assertEquals(3, eventCount)
   }
 
-  @Test
-  fun testNotifyUpdateCorrectForUnset() {
-    val engine = createTestEngine().withEntityFlags()
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("engineConfigurations")
+  fun testNotifyUpdateCorrectForUnset(name: String, engineFactory: () -> Engine) {
+    val engine = engineFactory()
     val entity = engine.data.createEntity { }
     var eventCount = 0
     entity.entityNotification { eventCount++ }

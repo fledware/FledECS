@@ -209,6 +209,14 @@ inline fun <reified T : Any> Entity.getOrNull(): T? =
     this.getOrNull(T::class)
 
 /**
+ * Checks if the given component exists.
+ *
+ * This will cause a component lookup.
+ */
+inline fun <reified T : Any> Entity.contains(): Boolean =
+    this.contains(T::class)
+
+/**
  * Creates a string that represents the entity and all of its components.
  */
 fun Entity.debugToString(startDepth: Int = 0): String {

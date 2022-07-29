@@ -105,6 +105,12 @@ fun EntityFactory.createPersonEntity(x: Int, y: Int): Entity {
   return result
 }
 
+fun Entity.isPersonEntity(): Boolean {
+  val placement = this.getOrNull<Placement>() ?: return false
+  if (placement.size != 1) return false
+  return this.contains<Movement>()
+}
+
 fun WorldBuilder.worldBuilderMovementOnly() {
   addSystem(MovementSystem())
   addSystem(BlockExecutingSystem())
@@ -114,6 +120,16 @@ fun WorldBuilder.worldBuilderMovementOnly() {
   }
   createPersonEntity(1, 1).name = "target"
   createPersonEntity(8, 8)
+}
+
+fun WorldBuilder.worldBuilderMovementOnlyIndexed(index: Int) {
+  addSystem(MovementSystem())
+  addSystem(BlockExecutingSystem())
+  createEntity {
+    name = "map"
+    add(MapDimensions(50, 50))
+  }
+  createPersonEntity(index, 0).name = "target"
 }
 
 fun WorldBuilder.worldBuilderEmptyScene() {

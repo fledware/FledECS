@@ -7,7 +7,6 @@ import fledware.ecs.ex.initWith
 import fledware.ecs.impl.AbstractWorldData
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
@@ -28,48 +27,6 @@ class WorldTest {
     engine.update(1f)
     assertEquals("world1", entity1.world)
     assertEquals("world2", entity2.world)
-  }
-
-  @Test
-  fun entityPassingThrowsOnNameCollision() {
-    val engine = createTestEngine()
-    val world1 = engine.createTestWorld("world1")
-    val world2 = engine.createTestWorld("world2")
-    assertEquals(3, world1.data.entities.size())
-    assertEquals(3, world2.data.entities.size())
-    engine.update(1f)
-
-    world1.execute { data.sendEntity("world2", data.entitiesNamed["target"]!!) }
-    engine.update(1f)
-
-    assertEquals(2, world1.data.entities.size())
-    assertEquals(3, world2.data.entities.size())
-    val exception = assertFailsWith<IllegalStateException> {
-      engine.update(1f)
-    }
-    assertEquals("named entity already exists: target", exception.message)
-  }
-
-  @Test
-  fun testEntityPassing() {
-    val engine = createTestEngine()
-    val world1 = engine.createTestWorld("world1")
-    val world2 = engine.createTestWorld("world2")
-    assertEquals(3, world1.data.entities.size())
-    assertEquals(3, world2.data.entities.size())
-    engine.update(1f)
-
-    world1.data.systems[BlockExecutingSystem::class].execute {
-      val passing = data.entities.find { it.name == "target" }!!
-      passing.name = "other"
-      data.sendEntity("world2", passing)
-    }
-    engine.update(1f)
-    assertEquals(2, world1.data.entities.size())
-    assertEquals(3, world2.data.entities.size())
-    engine.update(1f)
-    assertEquals(2, world1.data.entities.size())
-    assertEquals(4, world2.data.entities.size())
   }
 
   @Test

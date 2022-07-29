@@ -1,5 +1,6 @@
 package fledware.ecs
 
+import fledware.ecs.util.EventListeners0
 import fledware.ecs.util.EventListeners1
 
 
@@ -23,4 +24,12 @@ interface EngineEvents {
    * Called when a world is destroyed.
    */
   val onWorldDestroyed: EventListeners1<World>
+  /**
+   * called before the update is passed to the [EngineUpdateStrategy]
+   */
+  val onBeforeUpdate: EventListeners0
+  /**
+   * Called after the update returns from [EngineUpdateStrategy]
+   */
+  val onAfterUpdate: EventListeners0
 }
