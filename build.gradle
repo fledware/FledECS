@@ -1,12 +1,12 @@
 
 buildscript {
   ext {
-    kotlinVersion="1.7.0"
-    coroutineVersion="1.6.3"
-    junitVersion="5.8.2"
+    kotlinVersion="1.7.10"
+    coroutineVersion="1.6.4"
+    junitVersion="5.9.0"
     slf4jVersion="1.7.36"
-    fledUtilsVersion="0.1.5-SNAPSHOT"
-    eclipseCollectionsVersion="11.0.0"
+    fledUtilsVersion="0.1.6"
+    eclipseCollectionsVersion="11.1.0"
     gdxVersion="1.11.0"
     ktxVersion="1.11.0-rc1"
     log4jVersion="2.18.0"
