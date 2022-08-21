@@ -1,0 +1,28 @@
+plugins {
+  id "me.champeau.jmh" version "0.6.6"
+}
+
+dependencies {
+  jmh 'org.openjdk.jmh:jmh-core:1.35'
+  jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
+
+  implementation "io.fledware:fledutils:$fledUtilsVersion"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
+  implementation "org.eclipse.collections:eclipse-collections-api:$eclipseCollectionsVersion"
+  implementation "org.eclipse.collections:eclipse-collections:$eclipseCollectionsVersion"
+
+  implementation rootProject
+  implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+  implementation("com.badlogicgames.ashley:ashley:1.7.4"){
+    exclude group: 'com.badlogicgames.gdx', module: 'gdx'
+  }
+}
+
+jmh {
+  // cl, comp, gc, stack, perf, perfnorm, perfasm, xperf, xperfasm, hs_cl, hs_comp, hs_gc, hs_rt, hs_thr, async
+//  profilers = [ "gc" ]
+}

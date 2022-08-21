@@ -111,7 +111,7 @@ class EntityFlags : CachingComponent {
 /**
  * the static index that will be used for
  */
-val entityFlagsIndex by StaticMapperIndex<EntityFlags>()
+val entityFlagsIndex by StaticComponentMapperIndex<EntityFlags>()
 
 /**
  * gets [EntityFlags] on the given entity or returns null

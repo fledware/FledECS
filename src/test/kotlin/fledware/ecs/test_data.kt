@@ -21,6 +21,13 @@ data class MapDimensions(var sizeX: Int, var sizeY: Int)
 
 val WorldData.map get() = entitiesNamed["map"] ?: throw IllegalStateException("map not found")
 
+class ImmediateRemoveSystem : UpdateCountSystem() {
+  override fun onCreate(world: World, data: WorldData) {
+    super.onCreate(world, data)
+    data.removeSystem(this::class)
+  }
+}
+
 class MovementSystem : UpdateCountSystem() {
   private val placementIndex by lazy { data.componentIndexOf<Placement>() }
   private val movementIndex by lazy { data.componentIndexOf<Movement>() }

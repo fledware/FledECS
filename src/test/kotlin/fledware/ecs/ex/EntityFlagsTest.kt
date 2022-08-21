@@ -18,7 +18,7 @@ class EntityFlagsTest {
     @JvmStatic
     fun engineConfigurations(): Stream<Arguments> = Stream.of(
         Arguments.of("memory-index", { createTestEngine().withEntityFlags() }),
-        Arguments.of("static-index", { createTestEngine().withEntityFlags().withStaticEngineContext() })
+        Arguments.of("static-index", { createTestEngine().withEntityFlags().withStaticEngineContext() }),
     )
   }
 
@@ -68,7 +68,12 @@ class EntityFlagsTest {
     }
   }
 
-  private fun Entity.entityNotification(block: () -> Unit) {
+  /**
+   * note: this is not a good way to do things in prod. This will
+   * hijack the events for the world and cause the work to never
+   * see updates from this entity.
+   */
+  private fun Entity.badIdeaHijackEntityListening(block: () -> Unit) {
     (this as ManagedEntity).registerToWorld("test", object : EntityEvents {
       override fun onNameChange(entity: Entity) = TODO("Not yet implemented")
       override fun onUpdate(entity: Entity) = block()
@@ -81,7 +86,7 @@ class EntityFlagsTest {
     val engine = engineFactory()
     val entity = engine.data.createEntity { }
     var eventCount = 0
-    entity.entityNotification { eventCount++ }
+    entity.badIdeaHijackEntityListening { eventCount++ }
 
     entity += engine.data.flagIndexOf("FlagYo")
     // adding the component causes a notification and also the flag
@@ -100,7 +105,7 @@ class EntityFlagsTest {
     val engine = engineFactory()
     val entity = engine.data.createEntity { }
     var eventCount = 0
-    entity.entityNotification { eventCount++ }
+    entity.badIdeaHijackEntityListening { eventCount++ }
 
     entity -= engine.data.flagIndexOf("FlagYo")
     assertEquals(0, eventCount)

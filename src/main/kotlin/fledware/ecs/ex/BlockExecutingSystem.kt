@@ -2,7 +2,10 @@ package fledware.ecs.ex
 
 import fledware.ecs.AbstractSystem
 import fledware.ecs.World
+import fledware.ecs.WorldBuilder
+import fledware.ecs.WorldData
 import fledware.ecs.WorldManaged
+import fledware.ecs.getOrNull
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -16,12 +19,28 @@ class BlockExecutingSystem : AbstractSystem() {
     queue += block
   }
 
+  override fun onCreate(world: World, data: WorldData) {
+    super.onCreate(world, data)
+    executeAll()
+  }
+
   override fun update(delta: Float) {
+    executeAll()
+  }
+
+  private fun executeAll() {
     while (true) {
       val block = queue.poll() ?: break
       this.block()
     }
   }
+}
+
+/**
+ * Convenience method for adding [BlockExecutingSystem]
+ */
+fun WorldBuilder.withBlockExecutingSystem() {
+  addSystem(BlockExecutingSystem())
 }
 
 /**
@@ -35,5 +54,23 @@ class BlockExecutingSystem : AbstractSystem() {
  * @param block the block to execute.
  */
 fun World.execute(block: BlockExecutingSystem.() -> Unit) {
-  (this as WorldManaged).dataSafe.systems[BlockExecutingSystem::class].execute(block)
+  val executing = (this as WorldManaged).dataSafe.systems.getOrNull<BlockExecutingSystem>()
+      ?: throw IllegalStateException(
+          "BlockExecutingSystem required to call execute." +
+              " Call WorldBuilder.withBlockExecutingSystem during the world creation process")
+  executing.execute(block)
+}
+
+/**
+ * Convenience method for adding a one execution time with the given block.
+ *
+ * This requires [BlockExecutingSystem] and will error if the system is not
+ * in the builder.
+ */
+fun WorldBuilder.initWith(block: BlockExecutingSystem.() -> Unit) {
+  val executing = systems.find { it is BlockExecutingSystem }
+      ?: throw IllegalStateException(
+          "BlockExecutingSystem required to call initWith." +
+              " Call WorldBuilder.withBlockExecutingSystem before this method.")
+  (executing as BlockExecutingSystem).execute(block)
 }

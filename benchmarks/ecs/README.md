@@ -1,4 +1,4 @@
-# fledecs
+# ecs benchmarks
 
 ```
 Benchmark                          (entityCount)   Mode  Cnt      Score      Error  Units

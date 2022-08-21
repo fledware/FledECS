@@ -1,7 +1,6 @@
 package fledware.ecs
 
 import fledware.ecs.ex.BlockExecutingSystem
-import fledware.ecs.ex.InitSystem
 import fledware.ecs.ex.execute
 import fledware.ecs.ex.initWith
 import fledware.ecs.impl.AbstractWorldData
@@ -194,17 +193,25 @@ class WorldTest {
   }
 
   @Test
-  fun systemCanRemoveSelfAfterCreate() {
+  fun initWithIsCalledBeforeUpdate() {
     var yayISay: String? = null
     val engine = createTestEngine()
-    val world = engine.createWorldAndFlush("test") {
+    engine.createWorldAndFlush("test") {
       worldBuilderMovementOnly()
-      initWith { _, _ ->
+      initWith {
         yayISay = "yay!!!"
       }
     }
-
     assertEquals("yay!!!", yayISay)
-    assertNull(world.data.systems.getOrNull<InitSystem>())
+  }
+
+  @Test
+  fun systemCanRemoveSelfAfterCreate() {
+    val engine = createTestEngine()
+    val world = engine.createWorldAndFlush("test") {
+      worldBuilderMovementOnly()
+      addSystem(ImmediateRemoveSystem())
+    }
+    assertNull(world.data.systems.getOrNull<ImmediateRemoveSystem>())
   }
 }

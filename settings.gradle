@@ -1,4 +1,5 @@
 rootProject.name = 'fledecs'
-include 'benchmark'
+include 'benchmarks:ecs'
+include 'benchmarks:static-value'
 include 'examples:example-runner'
 include 'examples:game-of-life'
