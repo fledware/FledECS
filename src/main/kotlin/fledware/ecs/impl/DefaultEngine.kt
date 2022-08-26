@@ -13,6 +13,7 @@ import fledware.ecs.ManagedEntity
 import fledware.ecs.World
 import fledware.ecs.WorldBuilderDecorator
 import fledware.ecs.WorldManaged
+import fledware.ecs.util.ImmediateEventListeners0
 import fledware.ecs.util.ImmediateEventListeners1
 import fledware.ecs.util.Mapper
 import fledware.utilities.ConcurrentTypedMap
@@ -50,9 +51,11 @@ open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = mai
   }
 
   override fun update(delta: Float) = mutatingLock {
+    events.onBeforeUpdate()
     actualHandleRequests()
     updateStrategy.update(delta)
     actualHandleRequests()
+    events.onAfterUpdate()
   }
 
   override fun start() = mutatingLock {
@@ -61,7 +64,7 @@ open class DefaultEngine(override val updateStrategy: EngineUpdateStrategy = mai
     started = true
     updateStrategy.start(this)
     updateStrategy.createWorldUpdateGroup(options.defaultUpdateGroupName,
-                                          options.defaultUpdateGroupOrder)
+        options.defaultUpdateGroupOrder)
     data.start(this)
     events.onEngineStart(this)
     actualHandleRequests()
@@ -191,12 +194,16 @@ class DefaultEngineEvents : EngineEvents {
   override val onEngineShutdown = ImmediateEventListeners1<Engine>()
   override val onWorldCreated = ImmediateEventListeners1<World>()
   override val onWorldDestroyed = ImmediateEventListeners1<World>()
+  override val onBeforeUpdate = ImmediateEventListeners0()
+  override val onAfterUpdate = ImmediateEventListeners0()
 
   fun clear() {
     onEngineStart.listeners.clear()
     onEngineShutdown.listeners.clear()
     onWorldCreated.listeners.clear()
     onWorldDestroyed.listeners.clear()
+    onBeforeUpdate.listeners.clear()
+    onAfterUpdate.listeners.clear()
   }
 }
 

@@ -13,7 +13,6 @@ import fledware.ecs.Engine
 import fledware.ecs.ex.withEntityFlags
 import fledware.ecs.ex.withWorldScenes
 import fledware.ecs.impl.DefaultEngine
-import fledware.ecs.impl.DefaultWorldUpdateStrategy
 import fledware.ecs.impl.executorUpdateStrategy
 import org.slf4j.LoggerFactory
 

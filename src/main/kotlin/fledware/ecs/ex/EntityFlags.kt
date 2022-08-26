@@ -6,12 +6,10 @@ import fledware.ecs.Engine
 import fledware.ecs.EngineData
 import fledware.ecs.Entity
 import fledware.ecs.WorldData
-import fledware.ecs.getOrAdd
-import fledware.ecs.getOrNull
 import fledware.ecs.util.Mapper
 import fledware.ecs.util.exec
 import fledware.utilities.get
-import java.util.BitSet
+import java.util.*
 
 
 // ==================================================================
@@ -111,6 +109,29 @@ class EntityFlags : CachingComponent {
 }
 
 /**
+ * the static index that will be used for
+ */
+val entityFlagsIndex by StaticComponentMapperIndex<EntityFlags>()
+
+/**
+ * gets [EntityFlags] on the given entity or returns null
+ */
+val Entity.flagsOrNull: EntityFlags?
+  get() {
+    val index = entityFlagsIndex ?: data.mapper.indexOf(EntityFlags::class)
+    return getOrNull(index)
+  }
+
+/**
+ * gets [EntityFlags] or adds it, then returns the instance.
+ */
+val Entity.flagsOrAdd: EntityFlags
+  get() {
+    val index = entityFlagsIndex ?: data.mapper.indexOf(EntityFlags::class)
+    return getOrAdd(index) { EntityFlags() }
+  }
+
+/**
  * Returns true if the flag is set.
  */
 operator fun Entity.contains(index: FlagIndex) = flagContains(index)
@@ -133,7 +154,7 @@ operator fun Entity.minusAssign(index: FlagIndex) = flagClear(index)
  * Returns true if the flag is set.
  */
 fun Entity.flagContains(index: FlagIndex): Boolean {
-  val flags = this.getOrNull<EntityFlags>() ?: return false
+  val flags = this.flagsOrNull ?: return false
   return index.index in flags
 }
 
@@ -143,7 +164,7 @@ fun Entity.flagContains(index: FlagIndex): Boolean {
  * Automatically calls [Entity.notifyUpdate] if the flag wasn't already set.
  */
 fun Entity.flagSet(index: FlagIndex) {
-  val flags = this.getOrAdd { EntityFlags() }
+  val flags = this.flagsOrAdd
   if (!flags[index.index]) {
     flags += index.index
     notifyUpdate()
@@ -156,7 +177,7 @@ fun Entity.flagSet(index: FlagIndex) {
  * Automatically calls [Entity.notifyUpdate] if the flag was set.
  */
 fun Entity.flagClear(index: FlagIndex) {
-  val flags = this.getOrNull<EntityFlags>() ?: return
+  val flags = this.flagsOrNull ?: return
   if (flags[index.index]) {
     flags -= index.index
     notifyUpdate()
@@ -169,7 +190,7 @@ fun Entity.flagClear(index: FlagIndex) {
  * This will always call [Entity.notifyUpdate].
  */
 fun Entity.flagClearAll() {
-  val flags = this.getOrNull<EntityFlags>() ?: return
+  val flags = this.flagsOrNull ?: return
   flags.reset()
   notifyUpdate()
 }

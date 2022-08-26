@@ -117,6 +117,10 @@ interface WorldData : EntityFactory {
 
   /**
    * removes the given entity from ownership of this world.
+   * This is immediate, but the events will not fire until the
+   * next update (if not in an update loop) or between [System]
+   * updates. This will make most [EntityGroup] not actually
+   * ownership immediately.
    *
    * The entity is not actually cleaned as is safe to reuse
    * after this method returns.

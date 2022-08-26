@@ -1,6 +1,7 @@
 package fledware.ecs.util
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -12,7 +13,7 @@ interface EventListeners0 {
 }
 
 class ImmediateEventListeners0 : EventListeners0 {
-  val listeners = ConcurrentHashMap.newKeySet<() -> Unit>()!!
+  val listeners = CopyOnWriteArrayList<() -> Unit>()
   override fun add(listener: () -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: () -> Unit) = exec { listeners.remove(listener) }
   override operator fun plusAssign(listener: () -> Unit) = exec { listeners.add(listener) }
@@ -23,7 +24,7 @@ class ImmediateEventListeners0 : EventListeners0 {
 
 class BufferedEventListeners0 : EventListeners0 {
   val buffer = AtomicBoolean(false)
-  val listeners = ConcurrentHashMap.newKeySet<() -> Unit>()!!
+  val listeners = CopyOnWriteArrayList<() -> Unit>()
   @Volatile
   var freezeFire = false
   override fun add(listener: () -> Unit) = exec { listeners.add(listener) }
@@ -50,7 +51,7 @@ interface EventListeners1<T : Any> {
 }
 
 class ImmediateEventListeners1<T : Any>: EventListeners1<T> {
-  val listeners = ConcurrentHashMap.newKeySet<(T) -> Unit>()!!
+  val listeners = CopyOnWriteArrayList<(T) -> Unit>()
   override fun add(listener: (T) -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: (T) -> Unit) = exec { listeners.remove(listener) }
   override operator fun plusAssign(listener: (T) -> Unit) = exec { listeners.add(listener) }
@@ -61,7 +62,7 @@ class ImmediateEventListeners1<T : Any>: EventListeners1<T> {
 
 class BufferedEventListeners1<T : Any>: EventListeners1<T> {
   val buffer = UniqueList<T>()
-  val listeners = ConcurrentHashMap.newKeySet<(T) -> Unit>()!!
+  val listeners = CopyOnWriteArrayList<(T) -> Unit>()
   override fun add(listener: (T) -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: (T) -> Unit) = exec { listeners.remove(listener) }
   override operator fun plusAssign(listener: (T) -> Unit) = exec { listeners.add(listener) }

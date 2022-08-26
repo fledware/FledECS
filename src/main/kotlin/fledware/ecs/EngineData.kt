@@ -20,8 +20,13 @@ interface EngineData {
    */
   val contexts: MutableTypedMap<Any>
 
+//  /**
+//   * the mapper used to index contexts on [EngineData] and [WorldData]
+//   */
+//  val contextMapper: Mapper<Any>
+
   /**
-   *
+   * The mapper used to index components on an [Entity]
    */
   val componentMapper: Mapper<Any>
 
