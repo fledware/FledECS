@@ -117,19 +117,13 @@ val entityFlagsIndex by StaticComponentMapperIndex<EntityFlags>()
  * gets [EntityFlags] on the given entity or returns null
  */
 val Entity.flagsOrNull: EntityFlags?
-  get() {
-    val index = entityFlagsIndex ?: data.mapper.indexOf(EntityFlags::class)
-    return getOrNull(index)
-  }
+  get() = getOrNull(data.getOrFindIndex(entityFlagsIndex))
 
 /**
  * gets [EntityFlags] or adds it, then returns the instance.
  */
 val Entity.flagsOrAdd: EntityFlags
-  get() {
-    val index = entityFlagsIndex ?: data.mapper.indexOf(EntityFlags::class)
-    return getOrAdd(index) { EntityFlags() }
-  }
+  get() = getOrAdd(data.getOrFindIndex(entityFlagsIndex)) { EntityFlags() }
 
 /**
  * Returns true if the flag is set.

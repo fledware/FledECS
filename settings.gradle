@@ -1,4 +1,4 @@
-rootProject.name = 'fledecs'
+rootProject.name = 'FledECS'
 include 'benchmarks:ecs'
 include 'benchmarks:static-value'
 include 'examples:example-runner'

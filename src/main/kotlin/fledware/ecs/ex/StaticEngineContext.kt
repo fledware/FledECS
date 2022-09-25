@@ -3,6 +3,7 @@ package fledware.ecs.ex
 import fledware.ecs.Engine
 import fledware.ecs.EngineDataLifecycle
 import fledware.ecs.util.MapperIndex
+import fledware.ecs.util.MapperList
 import fledware.utilities.get
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -161,3 +162,9 @@ class StaticComponentMapperIndex<T : Any>(private val target: KClass<T>)
  * Convenience method for creating a [StaticComponentMapperIndex]
  */
 inline fun <reified T : Any> StaticComponentMapperIndex() = StaticComponentMapperIndex(T::class)
+
+/**
+ * Convenience method for using a static value.
+ */
+inline fun <reified T : Any> MapperList<Any, Any>.getOrFindIndex(index: MapperIndex<T>?) =
+    index ?: mapper.indexOf(T::class)
