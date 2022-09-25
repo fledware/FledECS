@@ -202,19 +202,13 @@ val cachingInfoIndex by StaticComponentMapperIndex<CacheInfo>()
  * gets [EntityFlags] on the given entity or returns null
  */
 val Entity.cachingInfoOrNull: CacheInfo?
-  get() {
-    val index = cachingInfoIndex ?: data.mapper.indexOf(CacheInfo::class)
-    return getOrNull(index)
-  }
+  get() = getOrNull(data.getOrFindIndex(cachingInfoIndex))
 
 /**
  * gets [EntityFlags] or adds it, then returns the instance.
  */
 val Entity.cachingInfoOrAdd: CacheInfo
-  get() {
-    val index = cachingInfoIndex ?: data.mapper.indexOf(CacheInfo::class)
-    return getOrAdd(index) { CacheInfo() }
-  }
+  get() = getOrAdd(data.getOrFindIndex(cachingInfoIndex)) { CacheInfo() }
 
 /**
  * the entity component used by this extension for info.
