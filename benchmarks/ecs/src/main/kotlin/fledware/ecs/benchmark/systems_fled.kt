@@ -12,15 +12,13 @@ import fledware.ecs.World
 import fledware.ecs.WorldData
 import fledware.ecs.componentIndexOf
 import fledware.ecs.forEach
-import fledware.ecs.util.MapperIndex
 
 class FledCollisionSystem : AbstractSystem() {
-  private lateinit var radiusIndex: MapperIndex<RadiusComponent>
+  private val radiusIndex by lazy { data.componentIndexOf<RadiusComponent>() }
   private lateinit var entities: EntityGroup
 
   override fun onCreate(world: World, data: WorldData) {
     super.onCreate(world, data)
-    radiusIndex = data.componentIndexOf()
     entities = data.createEntityGroup { radiusIndex in it }
   }
 
@@ -30,14 +28,8 @@ class FledCollisionSystem : AbstractSystem() {
 class FledMovementSystem : GroupIteratorSystem() {
 
   private val tmp = Vector2()
-  private lateinit var positionIndex: MapperIndex<PositionComponent>
-  private lateinit var movementIndex: MapperIndex<MovementComponent>
-
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    positionIndex = data.componentIndexOf()
-    movementIndex = data.componentIndexOf()
-  }
+  private val positionIndex by lazy { data.componentIndexOf<PositionComponent>() }
+  private val movementIndex by lazy { data.componentIndexOf<MovementComponent>() }
 
   override fun includeEntity(entity: Entity): Boolean {
     return positionIndex in entity && movementIndex in entity
@@ -54,12 +46,11 @@ class FledMovementSystem : GroupIteratorSystem() {
 }
 
 class FledRemovalSystem : AbstractSystem() {
-  private lateinit var removalIndex: MapperIndex<RemovalComponent>
+  private val removalIndex by lazy { data.componentIndexOf<RemovalComponent>() }
   private lateinit var entities: EntityGroup
 
   override fun onCreate(world: World, data: WorldData) {
     super.onCreate(world, data)
-    removalIndex = data.componentIndexOf()
     entities = data.createEntityGroup { removalIndex in it }
   }
 
@@ -69,12 +60,7 @@ class FledRemovalSystem : AbstractSystem() {
 }
 
 class FledStateSystem : GroupIteratorSystem() {
-  private lateinit var stateIndex: MapperIndex<StateComponent>
-
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    stateIndex = data.componentIndexOf()
-  }
+  private val stateIndex by lazy { data.componentIndexOf<StateComponent>() }
 
   override fun includeEntity(entity: Entity): Boolean {
     return stateIndex in entity

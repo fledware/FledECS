@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-  jmh 'org.openjdk.jmh:jmh-core:1.36'
-  jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
+  jmh "org.openjdk.jmh:jmh-core:$jmhCoreVersion"
+  jmh "org.openjdk.jmh:jmh-generator-annprocess:$jmhGeneratorVersion"
 
   implementation "io.fledware:fledutils:$fledUtilsVersion"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
