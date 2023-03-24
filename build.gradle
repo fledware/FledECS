@@ -8,7 +8,7 @@ buildscript {
     eclipseCollectionsVersion = "11.1.0"
     gdxVersion = "1.11.0"
     ktxVersion = "1.11.0-rc1"
-    log4jVersion = "2.19.0"
+    log4jVersion = "2.20.0"
     jmhCoreVersion = "1.36"
     jmhGeneratorVersion = "1.36"
   }
