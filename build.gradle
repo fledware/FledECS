@@ -1,8 +1,7 @@
 buildscript {
   ext {
-    kotlinVersion = "1.8.20"
-    coroutineVersion = "1.6.4"
-    junitVersion = "5.9.2"
+    kotlinVersion = "1.8.21"
+    junitVersion = "5.9.3"
     slf4jVersion = "2.0.7"
     fledUtilsVersion = "0.1.10-SNAPSHOT"
     eclipseCollectionsVersion = "11.1.0"
@@ -42,6 +41,22 @@ allprojects {
 
   compileJava {
     options.incremental = true
+  }
+
+  test {
+    useJUnitPlatform()
+    testLogging {
+      showStandardStreams = true
+    }
+    minHeapSize = "512m"
+    maxHeapSize = "2048m"
+  }
+
+  java {
+    withSourcesJar()
+    withJavadocJar()
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
   }
 
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
@@ -88,20 +103,6 @@ dependencies {
   testRuntimeOnly "org.apache.logging.log4j:log4j-slf4j2-impl:$log4jVersion"
   testRuntimeOnly "org.apache.logging.log4j:log4j-api:$log4jVersion"
   testRuntimeOnly "org.apache.logging.log4j:log4j-core:$log4jVersion"
-}
-
-test {
-  useJUnitPlatform()
-  testLogging {
-    showStandardStreams = true
-  }
-  minHeapSize = "512m"
-  maxHeapSize = "2048m"
-}
-
-java {
-  withSourcesJar()
-  withJavadocJar()
 }
 
 artifacts {
