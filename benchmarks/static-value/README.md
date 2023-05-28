@@ -2,6 +2,6 @@
 
 ```
 Benchmark                       Mode  Cnt         Score        Error  Units
-ValueMemoryBenchmark.baseline  thrpt    5   6613948.989 ± 128735.926  ops/s
-ValueStaticBenchmark.baseline  thrpt    5  29794495.243 ± 249321.888  ops/s
+ValueMemoryBenchmark.baseline  thrpt    5   8766312.361 ± 174788.258  ops/s
+ValueStaticBenchmark.baseline  thrpt    5  30208014.557 ± 113394.691  ops/s
 ```

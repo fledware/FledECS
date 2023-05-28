@@ -21,8 +21,6 @@ import fledware.ecs.forEach
 import fledware.ecs.forEachWorld
 import fledware.ecs.get
 import fledware.utilities.get
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import ktx.actors.txt
 import ktx.scene2d.actors
 import ktx.scene2d.table
@@ -198,10 +196,8 @@ class GameOfLifeScreen : GameScreen() {
   }
 
   private fun resetWorlds() {
-    runBlocking {
-      engine.data.worlds.values.forEach { world ->
-        launch { world.reset() }
-      }
+    engine.data.worlds.values.forEach { world ->
+      world.reset()
     }
   }
 
@@ -216,10 +212,8 @@ class GameOfLifeScreen : GameScreen() {
   }
 
   private fun randomizeWorlds() {
-    runBlocking {
-      engine.data.worlds.values.forEach { world ->
-        launch { world.random() }
-      }
+    engine.data.worlds.values.forEach { world ->
+      world.random()
     }
   }
 

@@ -7,8 +7,6 @@ import fledware.ecs.World
 import fledware.ecs.componentIndexOf
 import fledware.ecs.get
 import fledware.utilities.get
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /**
  * Finds an entity based on the location of the entity.
@@ -60,22 +58,14 @@ fun Engine.seedCells(worldsCount: Int, worldSize: Int) {
   println("created ${data.worlds.size} worlds!")
 
   // fill all worlds with cells
-  runBlocking {
-    data.worlds.values.forEach { world ->
-      launch {
-        world.fillCells()
-      }
-    }
+  data.worlds.values.forEach { world ->
+    world.fillCells()
   }
 
   // now that all the entities are created and won't change
   // location, create the neighbor lists.
-  runBlocking {
-    data.worlds.values.forEach { world ->
-      launch {
-        world.fillCellNeighbors()
-      }
-    }
+  data.worlds.values.forEach { world ->
+    world.fillCellNeighbors()
   }
 
   val totalEntities = data.worlds.values.sumOf { it.data.entities.size() }

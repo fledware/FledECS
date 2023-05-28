@@ -2,7 +2,6 @@ dependencies {
   api rootProject
   api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
   api "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-  api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVersion"
 
   api "io.fledware:fledutils:$fledUtilsVersion"
   api "io.github.libktx:ktx-app:$ktxVersion"
