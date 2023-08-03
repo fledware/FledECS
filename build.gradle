@@ -9,7 +9,7 @@ buildscript {
     ktxVersion = "1.11.0-rc1"
     log4jVersion = "2.20.0"
     jmhCoreVersion = "1.36"
-    jmhGeneratorVersion = "1.36"
+    jmhGeneratorVersion = "1.37"
   }
 
   repositories {
