@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package fledware.ecs
 
 import fledware.ecs.util.MapperIndex
@@ -14,27 +16,30 @@ import kotlin.reflect.KClass
  */
 @Suppress("UNCHECKED_CAST")
 abstract class Entity(
-    val id: Long,
+    val id: String,
     val data: MapperList<Any, Any>
 ) {
+  private val updateEvent by lazy { OnEntityUpdated(this) }
+
   init {
-    data.onUpdate = { events?.onUpdate(this) }
+    data.onUpdate = { _, _ -> notifyUpdate() }
   }
 
-  protected var events: EntityEvents? = null
+  protected var worldIn: World? = null
 
   /**
    * the world that his entity belongs to.
    */
-  var worldSafe: String? = null
-    protected set
+  val worldSafe: String?
+    get() = worldIn?.name
 
   /**
    * The world that this entity belongs to.
    *
    * @throws IllegalStateException when this entity doesn't belong to a world
    */
-  val world: String get() = worldSafe ?: throw IllegalStateException("not part of world")
+  val world: String
+    get() = worldSafe ?: throw IllegalStateException("not part of world")
 
   /**
    * The name that this entity has. An entity name must
@@ -47,8 +52,10 @@ abstract class Entity(
    */
   var name: String = ""
     set(value) {
+      val previous = field
       field = value
-      events?.onNameChange(this)
+      worldIn?.updateEvents?.fire(OnEntityNameChanged(this, previous))
+      notifyUpdate()
     }
 
   /**
@@ -63,7 +70,7 @@ abstract class Entity(
    * Update notifications are dedupe and will only be fired once after
    * a system update.
    */
-  fun notifyUpdate() = events?.onUpdate(this)
+  fun notifyUpdate() = worldIn?.updateEvents?.fire(updateEvent)
 
   /**
    * Adds the given component.
@@ -105,13 +112,13 @@ abstract class Entity(
    * Attempts to remove the given component. Returns the removed value if any.
    */
   fun <T : Any> remove(type: KClass<T>): T? =
-      data.unsetByKey(type) as T?
+      data.setByKey(type, null) as T?
 
   /**
    * Attempts to remove the given component. Returns the removed value if any.
    */
   fun <T : Any> remove(index: MapperIndex<T>): T? =
-      data.unsetByIndex(index)
+      data.setByIndex(index, null)
 
   /**
    * Gets the value or returns null.
@@ -166,6 +173,16 @@ abstract class Entity(
    */
   operator fun <T : Any> contains(index: MapperIndex<T>) =
       data.containsIndex(index)
+
+  /**
+   * Deletes the given entity from the world. This is equivalent
+   * to calling [EntityManager.delete].
+   *
+   * If this entity doesn't belong to a world, this method has no affect.
+   */
+  fun delete() {
+    worldIn?.entities?.delete(this)
+  }
 
   override fun toString(): String {
     if (hasName)
@@ -235,24 +252,4 @@ fun Entity.debugToString(startDepth: Int = 0): String {
   if (!hasComponents)
     result.appendLine().prependDepth(2).append("*no components*")
   return result.toString()
-}
-
-/**
- * The methods for managing an entity.
- *
- * These methods should only be called by the world.
- */
-class ManagedEntity(id: Long, components: MapperList<Any, Any>) : Entity(id, components) {
-
-  fun registerToWorld(worldName: String, events: EntityEvents) {
-    if (worldSafe != null || this.events != null)
-      throw IllegalStateException("$this is already registered to world $worldSafe")
-    this.worldSafe = worldName
-    this.events = events
-  }
-
-  fun unregisterWorld() {
-    this.worldSafe = null
-    this.events = null
-  }
 }

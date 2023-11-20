@@ -4,11 +4,11 @@ import fledware.ecs.Engine
 import fledware.ecs.Entity
 import fledware.ecs.World
 import fledware.ecs.createWorldAndFlush
-import fledware.ecs.ex.contains
-import fledware.ecs.ex.FlagIndex
-import fledware.ecs.ex.flagIndexOf
-import fledware.ecs.ex.minusAssign
-import fledware.ecs.ex.plusAssign
+import fledware.ecs.extensions.contains
+import fledware.ecs.extensions.FlagIndex
+import fledware.ecs.extensions.flagIndexOf
+import fledware.ecs.extensions.minusAssign
+import fledware.ecs.extensions.plusAssign
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Fork

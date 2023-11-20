@@ -9,27 +9,33 @@ import fledware.ecs.Entity
 import fledware.ecs.EntityGroup
 import fledware.ecs.GroupIteratorSystem
 import fledware.ecs.World
-import fledware.ecs.WorldData
 import fledware.ecs.componentIndexOf
 import fledware.ecs.forEach
+import fledware.ecs.util.MapperIndex
 
 class FledCollisionSystem : AbstractSystem() {
-  private val radiusIndex by lazy { data.componentIndexOf<RadiusComponent>() }
+  private val radiusIndex by lazy { world.componentIndexOf<RadiusComponent>() }
   private lateinit var entities: EntityGroup
 
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    entities = data.createEntityGroup { radiusIndex in it }
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    entities = world.entityGroups.create { radiusIndex in it }
   }
 
-  override fun update(delta: Float) { }
+  override fun update(delta: Float) {}
 }
 
 class FledMovementSystem : GroupIteratorSystem() {
 
   private val tmp = Vector2()
-  private val positionIndex by lazy { data.componentIndexOf<PositionComponent>() }
-  private val movementIndex by lazy { data.componentIndexOf<MovementComponent>() }
+  private lateinit var positionIndex: MapperIndex<PositionComponent>
+  private lateinit var movementIndex: MapperIndex<MovementComponent>
+
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    positionIndex = world.componentIndexOf()
+    movementIndex = world.componentIndexOf()
+  }
 
   override fun includeEntity(entity: Entity): Boolean {
     return positionIndex in entity && movementIndex in entity
@@ -46,21 +52,26 @@ class FledMovementSystem : GroupIteratorSystem() {
 }
 
 class FledRemovalSystem : AbstractSystem() {
-  private val removalIndex by lazy { data.componentIndexOf<RemovalComponent>() }
+  private val removalIndex by lazy { world.componentIndexOf<RemovalComponent>() }
   private lateinit var entities: EntityGroup
 
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    entities = data.createEntityGroup { removalIndex in it }
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    entities = world.entityGroups.create { removalIndex in it }
   }
 
   override fun update(delta: Float) {
-    entities.forEach { data.removeEntity(it) }
+    entities.forEach { it.delete() }
   }
 }
 
 class FledStateSystem : GroupIteratorSystem() {
-  private val stateIndex by lazy { data.componentIndexOf<StateComponent>() }
+  private lateinit var stateIndex: MapperIndex<StateComponent>
+
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    stateIndex = world.componentIndexOf()
+  }
 
   override fun includeEntity(entity: Entity): Boolean {
     return stateIndex in entity
@@ -74,18 +85,24 @@ class FledStateSystem : GroupIteratorSystem() {
 class FledRandomDeleter(worldAt: Int = -1) : AbstractSystem() {
   private var counter = 0
   private val counterReset: Int by lazy {
-    Constants.FRAMES_PER_REMOVAL * world.engine.data.worlds.size
+    Constants.FRAMES_PER_REMOVAL// * world.engine.data.worlds.size
   }
   private val removeAt: Int by lazy {
     if (worldAt < 0)
       return@lazy Constants.FRAMES_PER_REMOVAL
     return@lazy Constants.FRAMES_PER_REMOVAL * (worldAt + 1)
   }
+//  private lateinit var entities: EntityGroup
+
+//  override fun onCreate(world: World) {
+//    super.onCreate(world)
+//    entities = world.entityGroups.create { true }
+//  }
 
   override fun update(delta: Float) {
     counter++
     if (counter == removeAt)
-      data.entities.values().random().add(RemovalComponent())
+      world.entities.entities.values().random().add(RemovalComponent())
     if (counter > counterReset)
       counter = 0
   }
@@ -94,7 +111,7 @@ class FledRandomDeleter(worldAt: Int = -1) : AbstractSystem() {
 class FledRandomAdder(private val worldAt: Int = -1) : AbstractSystem() {
   private var counter = 0
   private val counterReset: Int by lazy {
-    Constants.FRAMES_PER_REMOVAL * world.engine.data.worlds.size
+    Constants.FRAMES_PER_REMOVAL// * world.engine.data.worlds.size
   }
   private val removeAt: Int by lazy {
     if (worldAt < 0)
@@ -105,12 +122,11 @@ class FledRandomAdder(private val worldAt: Int = -1) : AbstractSystem() {
   override fun update(delta: Float) {
     counter++
     if (counter == removeAt)
-      data.createEntity { stdWorldEntity(counter) }
+      world.entities.create { stdWorldEntity(counter) }
     if (counter > counterReset)
       counter = 0
   }
 }
-
 
 
 fun Entity.stdWorldEntity(entityIndex: Int) {

@@ -1,5 +1,10 @@
 package fledware.ecs
 
+import fledware.ecs.internal.EntityFactory
+import fledware.ecs.util.EventBus
+import fledware.utilities.MutableTypedMap
+import fledware.utilities.get
+
 /**
  * The public interface for the engine and other worlds to work with.
  * Depending on the implementation, all the methods should
@@ -7,33 +12,46 @@ package fledware.ecs
  */
 interface World {
   /**
-   * the engine this world belongs to
-   */
-  val engine: Engine
-
-  /**
    * the unique name of this world within the engine
    */
   val name: String
 
   /**
-   * the private data of this world. The default implementation
-   * of World will throw an exception if access is attempted
-   * during an update.
+   * world level components. This is never cleared (except for on destroy)
+   * and can be used for global data to this world.
    */
-  val data: WorldData
+  val contexts: MutableTypedMap<Any>
 
   /**
-   * the events for this world.
+   * The low level hooks for modifying the behaviour of this world.
+   * This likely doesn't need to be used.
+   *
+   * The world will always install the standard hook for creating entities
    */
-  val events: WorldEvents
+  val hooks: WorldHooks
 
   /**
-   * the options used to create this world. Can be any user
-   * defined object to help drive what this World does or how it's
-   * created.
+   *
    */
-  val options: Any?
+  val entities: EntityManager
+
+  /**
+   *
+   */
+  val entityGroups: EntityGroupManager
+
+  /**
+   *
+   */
+  val systems: SystemManager
+
+  /**
+   * The events that happen during the update of this world.
+   *
+   * These events are buffered and deduped and happen before
+   * and after every system udpate.
+   */
+  val updateEvents: EventBus
 
   /**
    * a count of how many times this world has been updated
@@ -52,46 +70,36 @@ interface World {
    * implementation buffers these and does the actual import later.
    */
   fun receiveEntity(entity: Entity)
-}
 
-interface WorldManaged : World {
   /**
-   * Gets the [WorldData] of this world, but will never throw an exception.
+   * will immediately delete all entities. This should not be called during
+   * an update or by a [System].
    *
-   * Don't use this unless you fully understand the effects it will cause
-   * on threading.
+   * This will release all entities and allow any hooks to recycle
+   * them (for instance, caching).
    */
-  val dataSafe: WorldData
+  fun deleteEntities()
 
   /**
-   * The update group this world belongs to.
+   * will immediately remove all entities. this should not be called during
+   * an update or by a [System].
+   *
+   * The entities will be returned, so they can be loaded again. This will not
+   * allow certain hooks to run (like caching).
    */
-  val updateGroup: String
-
-  /**
-   * used by the engine to let the world know it is wired up externally
-   * and can start initialization.
-   */
-  fun onCreate()
+  fun removeEntities(): List<Entity>
 
   /**
    * used by the engine to signal this world is to never be updated
    * again and should be cleaned up and deleted.
    */
-  fun onDestroy()
+  fun destroy()
 
   /**
-   * called on every world before any update methods are called.
-   */
-  fun preUpdate()
-
-  /**
-   * called on every world after preUpdate(), and before postUpdate()
+   *
    */
   fun update(delta: Float)
-
-  /**
-   * called on every world after all worlds returned from update()
-   */
-  fun postUpdate()
 }
+
+inline fun <reified T: Any> World.componentIndexOf() =
+    contexts.get<EntityFactory>().mapper.indexOf<T>(T::class)

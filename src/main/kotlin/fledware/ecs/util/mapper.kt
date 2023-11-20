@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package fledware.ecs.util
 
 import java.util.concurrent.ConcurrentHashMap
@@ -36,7 +38,7 @@ import kotlin.concurrent.withLock
  * keeps an index for the values to ensure consistent random access
  * with arrays that index based on the values.
  */
-class Mapper<T: Any> {
+class Mapper<T : Any> {
   private val _objects = mutableListOf<T>()
 
   private val _objectsToIds = ConcurrentHashMap<T, Int>()
@@ -54,43 +56,85 @@ class Mapper<T: Any> {
 
   fun reverseLookup(id: Int): T = _objects[id]
 
-  fun <V: Any> list() = MapperList<T, V>(this)
+  fun <V : Any> list() = MapperList<T, V>(this)
 
-  fun <V: Any> concurrentList() = ConcurrentMapperList<T, V>(this)
+  fun <V : Any> concurrentList() = ConcurrentMapperList<T, V>(this)
 
-  fun <V: Any> indexOf(key: T) = MapperIndex<V>(this[key])
+  fun <V : Any> indexOf(key: T) = MapperIndex<V>(this[key])
 }
-
 
 /**
  * Used by [Mapper] to give fast access and automatically
  * cast the returned object to the given type.
  */
-data class MapperIndex<T: Any>(val index: Int)
+data class MapperIndex<T : Any>(val index: Int)
 
+/**
+ * the update type when mutate operations are called on [MapperList].
+ *
+ * @see MapperList.setByIndex
+ * @see MapperList.clear
+ *
+ * This is left as an interface so custom events can be sent.
+ */
+interface MapperListUpdate
+
+/**
+ * when all elements are removed
+ */
+object MapperListUpdateCleared : MapperListUpdate
+
+/**
+ * an element was added and did not replace anything
+ */
+object MapperListUpdateAdd : MapperListUpdate
+
+/**
+ * an element was added, but did replace a value
+ */
+object MapperListUpdateSet : MapperListUpdate
+
+/**
+ * an element was removed
+ */
+object MapperListUpdateUnset : MapperListUpdate
 
 /**
  * Keeps an index for the values to ensure consistent random access
  * with arrays that index based on the values.
  */
 @Suppress("UNCHECKED_CAST")
-open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
-  // The data that holds all the objects. This is left public
-  // so others can do crazy things if they feel like it.
+open class MapperList<K : Any, V : Any>(val mapper: Mapper<K>) {
+  /**
+   * The data that holds all the objects. This is left public
+   * so others can do crazy things if they feel like it.
+   */
   var data = Array<Any?>(mapper.size) { null }
     private set
 
-  // Kind of a hack, but this will allow updates to propagate
-  // automatically without more object allocation. Only one listener
-  // at a time and intended only for use internally.
-  var onUpdate: (() -> Unit)? = null
-  fun fireOnUpdate() = onUpdate?.invoke()
+  /**
+   * Kind of a hack, but this will allow updates to propagate
+   * automatically without more object allocation. Only one listener
+   * at a time and intended only for use internally.
+   */
+  var onUpdate: ((type: MapperListUpdate, target: Any?) -> Unit)? = null
 
+  /**
+   * safely invokes [onUpdate]
+   */
+  fun fireOnUpdate(type: MapperListUpdate, target: Any?) = onUpdate?.invoke(type, target)
+
+  /**
+   * sets all the values in [data] to null.
+   *
+   * This will always cause a [MapperListUpdateCleared], regardless if
+   * anything actually changed.
+   */
   fun clear() {
     for (i in data.indices) {
       data[i] = null
     }
-    fireOnUpdate()
+    fireOnUpdate(MapperListUpdateCleared, null)
   }
 
   protected open fun grow() {
@@ -98,10 +142,10 @@ open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
   }
 
   fun getByIndex(index: Int): V = getByIndexOrNull(index)
-          ?: throw IndexOutOfBoundsException("index not found: $index => ${mapper.reverseLookup(index)}")
+      ?: throw IndexOutOfBoundsException("index not found: $index => ${mapper.reverseLookup(index)}")
 
   fun getByIndexOrNull(index: Int): V? =
-      if (index in data.indices) data[index] as V? else null
+      if (index < data.size) data[index] as V? else null
 
   fun getByIndexOrDefault(index: Int, default: V): V =
       getByIndexOrNull(index) ?: default
@@ -113,19 +157,19 @@ open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
       getByIndexOrNull(index) ?: setByIndex(index, block())!!
 
 
-  fun <T: V> getByIndex(index: MapperIndex<T>): T =
+  fun <T : V> getByIndex(index: MapperIndex<T>): T =
       getByIndex(index.index) as T
 
-  fun <T: V> getByIndexOrNull(index: MapperIndex<T>): T? =
+  fun <T : V> getByIndexOrNull(index: MapperIndex<T>): T? =
       getByIndexOrNull(index.index) as T?
 
-  fun <T: V> getByIndexOrDefault(index: MapperIndex<T>, default: T): T =
+  fun <T : V> getByIndexOrDefault(index: MapperIndex<T>, default: T): T =
       getByIndexOrDefault(index.index, default) as T
 
-  fun <T: V> getByIndexOrSet(index: MapperIndex<T>, default: T): T =
+  fun <T : V> getByIndexOrSet(index: MapperIndex<T>, default: T): T =
       getByIndexOrSet(index.index, default) as T
 
-  fun <T: V> getByIndexOrCreate(index: MapperIndex<T>, block: () -> T): T =
+  fun <T : V> getByIndexOrCreate(index: MapperIndex<T>, block: () -> T): T =
       getByIndexOrCreate(index.index, block) as T
 
 
@@ -155,11 +199,56 @@ open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
       getByIndexOrNull(index.index) != null
 
 
+  /**
+   * sets the given [value] to the given [index].
+   *
+   * this method does not cause an allocation unless [value]
+   * is not null and the backing [data] array is not large enough
+   * to contain index. the size will always grow to [Mapper.size],
+   * as the index should never be larger than that.
+   *
+   * [fireOnUpdate] will automatically be called based on the type
+   * of update that this call caused. The target differs based
+   * on the context of the update.
+   * @see fireOnUpdate
+   *
+   * Here are the different updates:
+   * * no update... [value] is null and there is no previous value
+   * * [MapperListUpdateAdd]: [value] not null and there is no previous value.
+   *   [value] will be passed as the update target.
+   * * [MapperListUpdateUnset]: [value] is null and there is a previous value.
+   *   The previous value will be passed on update target
+   * * [MapperListUpdateSet]: [value] and previous value are not null.
+   *   [value] will be passed as the update target.
+   *
+   * @return [value]
+   */
   fun setByIndex(index: Int, value: V?): V? {
-    if (index !in data.indices)
-      grow()
-    data[index] = value
-    fireOnUpdate()
+    val previous = data.getOrNull(index)
+    when {
+      // nothing to do
+      previous == null && value == null -> return null
+
+      // no previous value, but there is a value to set
+      previous == null && value != null -> {
+        if (index !in data.indices)
+          grow()
+        data[index] = value
+        fireOnUpdate(MapperListUpdateAdd, value)
+      }
+
+      // a previous value, but no new value
+      value == null -> {
+        data[index] = null
+        fireOnUpdate(MapperListUpdateUnset, previous)
+      }
+
+      // a previous value, and a new value
+      else -> {
+        data[index] = value
+        fireOnUpdate(MapperListUpdateSet, value)
+      }
+    }
     return value
   }
 
@@ -174,13 +263,13 @@ open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
   }
 
 
-  fun <T: V> setByIndex(index: MapperIndex<T>, value: T?): T? =
+  fun <T : V> setByIndex(index: MapperIndex<T>, value: T?): T? =
       setByIndex(index.index, value) as T?
 
-  fun <T: V> setByIndexIfNull(index: MapperIndex<T>, value: T): T =
+  fun <T : V> setByIndexIfNull(index: MapperIndex<T>, value: T): T =
       setByIndexIfNull(index.index, value) as T
 
-  fun <T: V> setByIndexOrThrow(index: MapperIndex<T>, value: T): T =
+  fun <T : V> setByIndexOrThrow(index: MapperIndex<T>, value: T): T =
       setByIndexOrThrow(index.index, value) as T
 
 
@@ -192,23 +281,9 @@ open class MapperList<K: Any, V: Any>(val mapper: Mapper<K>) {
 
   fun setByKeyOrThrow(key: K, value: V): V =
       setByIndexOrThrow(mapper[key], value)
-
-
-  fun unsetByIndex(index: Int): V? {
-    if (index !in data.indices) {
-      return null
-    }
-    val result = data[index] ?: return null
-    fireOnUpdate()
-    return result as V
-  }
-
-  fun unsetByKey(key: K): V? = unsetByIndex(mapper[key])
-
-  fun <T: V> unsetByIndex(index: MapperIndex<T>): T? = unsetByIndex(index.index) as T?
 }
 
-inline fun <K: Any, V: Any> MapperList<K, V>.forEach(block: (key: K, value: V?) -> Unit) {
+inline fun <K : Any, V : Any> MapperList<K, V>.forEach(block: (key: K, value: V?) -> Unit) {
   this.data.forEachIndexed { index, value ->
     val key = mapper.reverseLookup(index)
     @Suppress("UNCHECKED_CAST")
@@ -216,7 +291,7 @@ inline fun <K: Any, V: Any> MapperList<K, V>.forEach(block: (key: K, value: V?) 
   }
 }
 
-inline fun <K: Any, V: Any> MapperList<K, V>.forEachNotNull(block: (key: K, value: V) -> Unit) {
+inline fun <K : Any, V : Any> MapperList<K, V>.forEachNotNull(block: (key: K, value: V) -> Unit) {
   this.data.forEachIndexed { index, value ->
     val key = mapper.reverseLookup(index)
     val notNullValue = value ?: return@forEachIndexed
@@ -225,7 +300,7 @@ inline fun <K: Any, V: Any> MapperList<K, V>.forEachNotNull(block: (key: K, valu
   }
 }
 
-class ConcurrentMapperList<K: Any, V: Any>(mapper: Mapper<K>) : MapperList<K, V>(mapper) {
+class ConcurrentMapperList<K : Any, V : Any>(mapper: Mapper<K>) : MapperList<K, V>(mapper) {
   private val growLock = ReentrantLock()
 
   override fun grow() = growLock.withLock { super.grow() }

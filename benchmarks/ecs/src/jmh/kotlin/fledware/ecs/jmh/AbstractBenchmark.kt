@@ -19,6 +19,6 @@ import java.util.concurrent.TimeUnit
 @Warmup(iterations = 5, time = 2, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 2, timeUnit = TimeUnit.SECONDS)
 abstract class AbstractBenchmark {
-  @Param("4096", "16384", "65536", "262144")
+  @Param("4096", "16384", "65536", "262144", "1048576")
   var entityCount = 0
 }

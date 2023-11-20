@@ -1,6 +1,7 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package fledware.ecs.util
 
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -25,17 +26,13 @@ class ImmediateEventListeners0 : EventListeners0 {
 class BufferedEventListeners0 : EventListeners0 {
   val buffer = AtomicBoolean(false)
   val listeners = CopyOnWriteArrayList<() -> Unit>()
-  @Volatile
-  var freezeFire = false
   override fun add(listener: () -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: () -> Unit) = exec { listeners.remove(listener) }
   override operator fun plusAssign(listener: () -> Unit) = exec { listeners.add(listener) }
   override operator fun minusAssign(listener: () -> Unit) = exec { listeners.remove(listener) }
-  operator fun invoke() = exec { buffer.set(false) }
+  operator fun invoke() = exec { buffer.set(true) }
   fun clear() = exec { listeners.clear() }
   fun fire() {
-    if (freezeFire)
-      return
     if (buffer.compareAndSet(true, false)) {
       listeners.forEach { it() }
     }
@@ -50,7 +47,7 @@ interface EventListeners1<T : Any> {
   fun remove(listener: (T) -> Unit)
 }
 
-class ImmediateEventListeners1<T : Any>: EventListeners1<T> {
+class ImmediateEventListeners1<T : Any> : EventListeners1<T> {
   val listeners = CopyOnWriteArrayList<(T) -> Unit>()
   override fun add(listener: (T) -> Unit) = exec { listeners.add(listener) }
   override fun remove(listener: (T) -> Unit) = exec { listeners.remove(listener) }
@@ -60,7 +57,7 @@ class ImmediateEventListeners1<T : Any>: EventListeners1<T> {
   fun clear() = exec { listeners.clear() }
 }
 
-class BufferedEventListeners1<T : Any>: EventListeners1<T> {
+class BufferedEventListeners1<T : Any> : EventListeners1<T> {
   val buffer = UniqueList<T>()
   val listeners = CopyOnWriteArrayList<(T) -> Unit>()
   override fun add(listener: (T) -> Unit) = exec { listeners.add(listener) }

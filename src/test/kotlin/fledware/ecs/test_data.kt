@@ -1,10 +1,7 @@
 package fledware.ecs
 
-import fledware.ecs.ex.BlockExecutingSystem
-import fledware.ecs.ex.CachingComponent
-import fledware.ecs.ex.createCachedEntity
-import fledware.ecs.ex.sceneName
-import fledware.ecs.impl.DefaultEngine
+import fledware.ecs.extensions.CachingComponent
+import fledware.ecs.extensions.withBlockExecutingSystem
 
 data class Placement(var x: Int, var y: Int, var size: Int)
 
@@ -19,25 +16,34 @@ data class Health(var health: Int)
 
 data class MapDimensions(var sizeX: Int, var sizeY: Int)
 
-val WorldData.map get() = entitiesNamed["map"] ?: throw IllegalStateException("map not found")
+val EntityManager.map
+  get() = this.getByName("map")
+
+val EntityGroupManager.persons
+  get() = this["persons"]
 
 class ImmediateRemoveSystem : UpdateCountSystem() {
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    data.removeSystem(this::class)
+  override fun update(delta: Float) {
+    super.update(delta)
+    world.systems.remove(this::class)
   }
 }
 
 class MovementSystem : UpdateCountSystem() {
-  private val placementIndex by lazy { data.componentIndexOf<Placement>() }
-  private val movementIndex by lazy { data.componentIndexOf<Movement>() }
-  private val mapIndex by lazy { data.componentIndexOf<MapDimensions>() }
-  val entities by lazy { data.createEntityGroup { placementIndex in it && movementIndex in it } }
+  private val placementIndex by lazy { world.componentIndexOf<Placement>() }
+  private val movementIndex by lazy { world.componentIndexOf<Movement>() }
+  private val mapIndex by lazy { world.componentIndexOf<MapDimensions>() }
+  val entities by lazy { world.entityGroups.create("persons") { it.isPersonEntity() } }
+
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    entities
+  }
 
   override fun update(delta: Float) {
     super.update(delta)
     entities.forEach { entity ->
-      val map = data.map[mapIndex]
+      val map = world.entities.map[mapIndex]
       val placement = entity[placementIndex]
       val movement = entity[movementIndex]
 
@@ -82,8 +88,8 @@ open class UpdateCountSystem(enabled: Boolean = true,
     onDestroyCount++
   }
 
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
+  override fun onCreate(world: World) {
+    super.onCreate(world)
     onCreateCount++
   }
 
@@ -102,14 +108,13 @@ open class UpdateCountSystem(enabled: Boolean = true,
   }
 }
 
-fun EntityFactory.createPersonEntity(x: Int, y: Int): Entity {
-  val result = createCachedEntity("person") {
-    add(Placement(0, 0, 1))
-    add(Movement(0, 0))
-  }
-  result.get<Placement>().x = x
-  result.get<Placement>().y = y
-  return result
+fun EntityManager.createPersonEntity(x: Int, y: Int): Entity = create {
+  add(Placement(x, y, 1))
+  add(Movement(0, 0))
+}
+
+fun EntityManager.createMapEntity(dimensionX: Int, dimensionY: Int) = create("map") {
+  add(MapDimensions(dimensionX, dimensionY))
 }
 
 fun Entity.isPersonEntity(): Boolean {
@@ -118,39 +123,38 @@ fun Entity.isPersonEntity(): Boolean {
   return this.contains<Movement>()
 }
 
-fun WorldBuilder.worldBuilderMovementOnly() {
-  addSystem(MovementSystem())
-  addSystem(BlockExecutingSystem())
-  createEntity {
-    name = "map"
-    add(MapDimensions(10, 10))
-  }
-  createPersonEntity(1, 1).name = "target"
-  createPersonEntity(8, 8)
+fun World.worldBuilderMovementOnly(): World {
+  this.withBlockExecutingSystem()
+  this.systems.add(MovementSystem())
+  this.entities.createMapEntity(10, 10)
+  this.entities.createPersonEntity(1, 1).name = "target"
+  this.entities.createPersonEntity(8, 8)
+  this.update(1f)
+  return this
 }
 
-fun WorldBuilder.worldBuilderMovementOnlyIndexed(index: Int) {
-  addSystem(MovementSystem())
-  addSystem(BlockExecutingSystem())
-  createEntity {
-    name = "map"
-    add(MapDimensions(50, 50))
-  }
-  createPersonEntity(index, 0).name = "target"
-}
-
-fun WorldBuilder.worldBuilderEmptyScene() {
-  addSystem(MovementSystem())
-  addSystem(BlockExecutingSystem())
-  sceneName = ""
-}
-
-fun Engine.createTestWorld(name: String = "test"): World {
-  return createWorldAndFlush(name, null, WorldBuilder::worldBuilderMovementOnly)
-}
-
-fun Engine.createEmptySceneWorld(name: String = "test"): World {
-  return createWorldAndFlush(name, null, WorldBuilder::worldBuilderEmptyScene)
-}
-
-fun createTestEngine() = DefaultEngine().also { it.start() }
+//fun World.worldBuilderMovementOnlyIndexed(index: Int) {
+//  addSystem(MovementSystem())
+//  addSystem(BlockExecutingSystem())
+//  createEntity {
+//    name = "map"
+//    add(MapDimensions(50, 50))
+//  }
+//  createPersonEntity(index, 0).name = "target"
+//}
+//
+//fun WorldBuilder.worldBuilderEmptyScene() {
+//  addSystem(MovementSystem())
+//  addSystem(BlockExecutingSystem())
+//  sceneName = ""
+//}
+//
+//fun Engine.createTestWorld(name: String = "test"): World {
+//  return createWorldAndFlush(name, null, WorldBuilder::worldBuilderMovementOnly)
+//}
+//
+//fun Engine.createEmptySceneWorld(name: String = "test"): World {
+//  return createWorldAndFlush(name, null, WorldBuilder::worldBuilderEmptyScene)
+//}
+//
+//fun createTestEngine() = DefaultEngine().also { it.start() }

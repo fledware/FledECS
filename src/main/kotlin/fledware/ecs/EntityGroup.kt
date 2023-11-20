@@ -11,6 +11,10 @@ interface EntityGroup {
    */
   val world: World
   /**
+   * the name of this group
+   */
+  val name: String
+  /**
    * the entities in this group
    */
   val entities: List<Entity>
@@ -33,22 +37,10 @@ interface EntityGroup {
 }
 
 /**
- * the internal entity group that includes management methods
+ * iterates over all the given entities.
  */
-interface EntityGroupManaged: EntityGroup {
-  /**
-   *
-   */
-  fun attachWorld(world: World, data: WorldData)
-  /**
-   * Will remove all entities. This should only be used
-   * for when all entities in this group is about to be removed.
-   */
-  fun clear()
-  /**
-   * Will remove all entities and unsubscribe itself from any events.
-   */
-  fun finished()
+inline fun EntityGroup.forEach(block: (entity: Entity) -> Unit) {
+  for (index in entities.indices) {
+    block(entities[index])
+  }
 }
-
-inline fun EntityGroup.forEach(block: (entity: Entity) -> Unit) = entities.forEach(block)

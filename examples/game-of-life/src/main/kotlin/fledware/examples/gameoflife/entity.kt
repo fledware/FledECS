@@ -2,7 +2,7 @@ package fledware.examples.gameoflife
 
 import fledware.ecs.Engine
 import fledware.ecs.Entity
-import fledware.ecs.EntityFactory
+import fledware.ecs.internal.EntityFactory
 import fledware.ecs.World
 import fledware.ecs.componentIndexOf
 import fledware.ecs.get

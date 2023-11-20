@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package fledware.ecs
 
 /**
@@ -24,10 +26,8 @@ interface System {
    * Called by the world once the world is finished creating.
    *
    * @param world the world that is managing this system
-   * @param data the world data that can be accessed by this system
-   *             without data protections during update
    */
-  fun onCreate(world: World, data: WorldData) = Unit
+  fun onCreate(world: World) = Unit
   /**
    * Called when the world no longer needs this system.
    */
@@ -64,24 +64,15 @@ abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System 
   /**
    * The order of this world.
    *
-   * When setting this value, it automatically calls [WorldData.clearCaches]
-   * to force a reindex and sorting of the world systems.
+   * This will send the OnSystemOrderChange event.
    */
   override var order: Int = order
     set(value) {
       field = value
-      dataSafe?.clearCaches()
+      worldSafe?.also { it.updateEvents.fire(OnSystemOrderChange(this)) }
     }
 
-  private var engineSafe: Engine? = null
   private var worldSafe: World? = null
-  private var dataSafe: WorldData? = null
-
-  /**
-   * the engine that manages this system
-   */
-  val engine: Engine get() = engineSafe
-      ?: throw IllegalStateException("onCreate must be called first")
 
   /**
    * the world that manages this system
@@ -89,20 +80,9 @@ abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System 
   val world: World get() = worldSafe
       ?: throw IllegalStateException("onCreate must be called first")
 
-  /**
-   * The data of the world that manages this system.
-   *
-   * This allows access to [World.data] without the update
-   * protection check.
-   */
-  val data: WorldData get() = dataSafe
-      ?: throw IllegalStateException("onCreate must be called first")
-
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    this.engineSafe = world.engine
+  override fun onCreate(world: World) {
+    super.onCreate(world)
     this.worldSafe = world
-    this.dataSafe = data
     if (enabled)
       onEnabled()
     else
@@ -144,9 +124,9 @@ abstract class GroupIteratorSystem(val groupName: String = "") : AbstractSystem(
   lateinit var entities: EntityGroup
     private set
 
-  override fun onCreate(world: World, data: WorldData) {
-    super.onCreate(world, data)
-    entities = data.createEntityGroup(groupName, this::includeEntity)
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    entities = world.entityGroups.create(groupName, this::includeEntity)
   }
 
   override fun update(delta: Float) {
