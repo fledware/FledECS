@@ -102,7 +102,7 @@ class FledRandomDeleter(worldAt: Int = -1) : AbstractSystem() {
   override fun update(delta: Float) {
     counter++
     if (counter == removeAt)
-      world.entities.entities.values().random().add(RemovalComponent())
+      world.entities.entities.values.random().add(RemovalComponent())
     if (counter > counterReset)
       counter = 0
   }

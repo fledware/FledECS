@@ -29,7 +29,7 @@ interface WorldHooks {
   /**
    * called when an entity is attempted to be created.
    *
-   * There is a default hook for creating entities with a sort of 0
+   * There is a default hook for creating entities with a sort of MAX_VALUE
    * @see fledware.ecs.internal.DefaultEntityFactory
    * This hook will always be installed.
    *

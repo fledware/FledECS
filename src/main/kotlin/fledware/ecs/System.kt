@@ -77,8 +77,8 @@ abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System 
   /**
    * the world that manages this system
    */
-  val world: World get() = worldSafe
-      ?: throw IllegalStateException("onCreate must be called first")
+  val world: World
+    get() = worldSafe ?: throw IllegalStateException("onCreate must be called first")
 
   override fun onCreate(world: World) {
     super.onCreate(world)
@@ -90,9 +90,9 @@ abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System 
   }
 
   override fun onDestroy() {
-    super.onDestroy()
     if (enabled)
       enabled = false
+    super.onDestroy()
   }
 
   /**
@@ -104,6 +104,34 @@ abstract class AbstractSystem(enabled: Boolean = true, order: Int = 0) : System 
    * called when enabled is set to false.
    */
   open fun onDisabled() = Unit
+}
+
+/**
+ * A special case system that only processes based on events. [update]
+ * will never be called.
+ */
+abstract class ReactiveSystem : System {
+  override val enabled: Boolean
+    get() = false
+  override val order: Int
+    get() = 0
+
+  private var worldSafe: World? = null
+
+  /**
+   * the world that manages this system
+   */
+  val world: World
+    get() = worldSafe ?: throw IllegalStateException("onCreate must be called first")
+
+  override fun onCreate(world: World) {
+    super.onCreate(world)
+    this.worldSafe = world
+  }
+
+  override fun update(delta: Float) {
+    throw IllegalStateException("never should be called")
+  }
 }
 
 /**

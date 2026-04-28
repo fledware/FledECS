@@ -7,8 +7,8 @@ import fledware.ecs.World
 import fledware.ecs.util.getRandomString
 import java.util.concurrent.ConcurrentHashMap
 
-class DefaultEntityGroupManager(
-    private val world: World
+open class DefaultEntityGroupManager(
+    final override val world: World
 ) : InternalEntityGroupManager {
   private val groups = ConcurrentHashMap<String, DefaultEntityGroup>()
 

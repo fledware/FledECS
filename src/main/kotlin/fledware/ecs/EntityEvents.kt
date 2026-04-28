@@ -10,14 +10,6 @@ data class OnEntityUpdated(
 )
 
 /**
- * when the name of an entity has changed
- */
-data class OnEntityNameChanged(
-    val entity: Entity,
-    val previousName: String
-)
-
-/**
  * when an entity is added to an [EntityManager]. [isCreate] is
  * true when the entity is created via [EntityManager.create].
  *

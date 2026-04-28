@@ -13,7 +13,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KClass
 
 @Suppress("MemberVisibilityCanBePrivate")
-open class DefaultSystemManager(protected val world: World) : InternalSystemManager {
+open class DefaultSystemManager(
+    final override val world: World
+) : InternalSystemManager {
   override val systems = RootDefaultTypedMap<System>()
   protected val systemsCache = CachedArray {
     systems.values.sortedBy { it.order }.toTypedArray()

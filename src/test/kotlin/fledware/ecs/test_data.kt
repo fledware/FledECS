@@ -1,7 +1,10 @@
 package fledware.ecs
 
 import fledware.ecs.extensions.CachingComponent
+import fledware.ecs.extensions.getByName
+import fledware.ecs.extensions.name
 import fledware.ecs.extensions.withBlockExecutingSystem
+import fledware.ecs.extensions.withEntityName
 
 data class Placement(var x: Int, var y: Int, var size: Int)
 
@@ -16,7 +19,7 @@ data class Health(var health: Int)
 
 data class MapDimensions(var sizeX: Int, var sizeY: Int)
 
-val EntityManager.map
+val EntityManager.map : Entity
   get() = this.getByName("map")
 
 val EntityGroupManager.persons
@@ -113,7 +116,8 @@ fun EntityManager.createPersonEntity(x: Int, y: Int): Entity = create {
   add(Movement(0, 0))
 }
 
-fun EntityManager.createMapEntity(dimensionX: Int, dimensionY: Int) = create("map") {
+fun EntityManager.createMapEntity(dimensionX: Int, dimensionY: Int) = create {
+  this.name = "map"
   add(MapDimensions(dimensionX, dimensionY))
 }
 
@@ -124,6 +128,7 @@ fun Entity.isPersonEntity(): Boolean {
 }
 
 fun World.worldBuilderMovementOnly(): World {
+  this.withEntityName()
   this.withBlockExecutingSystem()
   this.systems.add(MovementSystem())
   this.entities.createMapEntity(10, 10)

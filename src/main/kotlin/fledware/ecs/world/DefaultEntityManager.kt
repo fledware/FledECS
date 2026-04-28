@@ -10,30 +10,24 @@ import fledware.ecs.internal.ManagedEntity
 
 @Suppress("MemberVisibilityCanBePrivate")
 open class DefaultEntityManager(
-    protected val world: World
+    final override val world: World
 ) : InternalEntityManager {
-  override val entitiesById = mutableMapOf<String, Entity>()
-  override val entitiesByName = mutableMapOf<String, Entity>()
+  override val entities = mutableMapOf<String, Entity>()
 
   // ================================================================
   // access
   // ================================================================
 
   override val size: Int
-    get() = entitiesById.size
+    get() = entities.size
 
   override fun getById(id: String): Entity {
-    return entitiesById[id]
+    return entities[id]
         ?: throw IllegalStateException("entity not found with id $id")
   }
 
-  override fun getByName(name: String): Entity {
-    return entitiesByName[name]
-        ?: throw IllegalStateException("entity not found with name $name")
-  }
-
   override fun forEach(block: (entity: Entity) -> Unit) {
-    entitiesById.values.forEach { block(it) }
+    entities.values.forEach { block(it) }
   }
 
   // ================================================================
@@ -44,23 +38,18 @@ open class DefaultEntityManager(
     additionFinalize(entity, isCreate = false)
   }
 
-  override fun create(name: String, decorator: Entity.() -> Unit): Entity {
+  override fun create(decorator: Entity.() -> Unit): Entity {
     val result = world.hooks.onCreateEntity.list.firstNotNullOf { it(world) }
-    result.name = name
     result.decorator()
     additionFinalize(result, isCreate = true)
     return result
   }
 
   protected open fun additionFinalize(entity: Entity, isCreate: Boolean) {
-    if (entitiesById.containsKey(entity.id))
+    if (entities.containsKey(entity.id))
       throw IllegalStateException("entity with id already exists: $entity")
-    if (entity.hasName && entitiesByName.putIfAbsent(entity.name, entity) != null)
-      throw IllegalStateException("entity with name already exists: $entity")
-    entitiesById[entity.id] = entity
-
-    (entity as ManagedEntity)
-    entity.registerToWorld(world)
+    entities[entity.id] = entity
+    (entity as ManagedEntity).registerToWorld(world)
     world.updateEvents.fire(OnEntityAdded(entity, isCreate))
   }
 
@@ -69,27 +58,17 @@ open class DefaultEntityManager(
   // ================================================================
 
   override fun delete(entity: Entity) {
-    entitiesById.remove(entity.id)
-    entitiesByName.remove(entity.name)
-    removalFinalize(entity, isDelete = true)
-  }
-
-  override fun deleteByName(name: String) {
-    val entity = entitiesByName.remove(name) ?: return
-    entitiesById.remove(entity.id)
+    entities.remove(entity.id)
     removalFinalize(entity, isDelete = true)
   }
 
   override fun deleteById(id: String) {
-    val entity = entitiesById.remove(id) ?: return
-    if (entity.hasName)
-      entitiesByName.remove(entity.name)
+    val entity = entities.remove(id) ?: return
     removalFinalize(entity, isDelete = true)
   }
 
   override fun remove(entity: Entity) {
-    entitiesById.remove(entity.id)
-    entitiesByName.remove(entity.name)
+    entities.remove(entity.id)
     removalFinalize(entity, isDelete = false)
   }
 
@@ -114,9 +93,8 @@ open class DefaultEntityManager(
   }
 
   protected open fun clearingFinalize(isDelete: Boolean): List<Entity> {
-    val result = entitiesById.values.toList()
-    entitiesById.clear()
-    entitiesByName.clear()
+    val result = entities.values.toList()
+    entities.clear()
     world.updateEvents.fire(OnEntitiesCleared(result, isDelete))
     return result
   }
@@ -126,7 +104,6 @@ open class DefaultEntityManager(
   // ================================================================
 
   override fun destroy() {
-    entitiesById.clear()
-    entitiesByName.clear()
+    entities.clear()
   }
 }

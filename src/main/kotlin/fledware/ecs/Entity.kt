@@ -30,38 +30,8 @@ abstract class Entity(
   /**
    * the world that his entity belongs to.
    */
-  val worldSafe: String?
-    get() = worldIn?.name
-
-  /**
-   * The world that this entity belongs to.
-   *
-   * @throws IllegalStateException when this entity doesn't belong to a world
-   */
-  val world: String
-    get() = worldSafe ?: throw IllegalStateException("not part of world")
-
-  /**
-   * The name that this entity has. An entity name must
-   * be unique for the world it belongs to. It doesn't need
-   * to be unique to the engine.
-   *
-   * When an entity is passed to another world, it will not automatically
-   * remove its own name. An error will be thrown if the receiving world
-   * already has an entity with that name.
-   */
-  var name: String = ""
-    set(value) {
-      val previous = field
-      field = value
-      worldIn?.updateEvents?.fire(OnEntityNameChanged(this, previous))
-      notifyUpdate()
-    }
-
-  /**
-   * If this entity has a name.
-   */
-  val hasName get() = name != ""
+  val worldSafe: World?
+    get() = worldIn
 
   /**
    * A system should call this if this entity needs to have a notification
@@ -185,8 +155,6 @@ abstract class Entity(
   }
 
   override fun toString(): String {
-    if (hasName)
-      return "Entity($id){$name}"
     return "Entity($id)"
   }
 

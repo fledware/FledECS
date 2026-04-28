@@ -48,8 +48,7 @@ interface World {
   /**
    * The events that happen during the update of this world.
    *
-   * These events are buffered and deduped and happen before
-   * and after every system udpate.
+   * These events are buffered/deduped and happen before/after every system update.
    */
   val updateEvents: EventBus
 
@@ -60,8 +59,7 @@ interface World {
 
   /**
    * send a message to this world in a thread safe way. The default
-   * implementation buffers messages and handles them in thread safe
-   * ways.
+   * implementation buffers messages and does the actual handling later.
    */
   fun receiveMessage(message: Any)
 

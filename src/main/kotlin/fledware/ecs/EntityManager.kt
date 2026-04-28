@@ -8,11 +8,7 @@ interface EntityManager {
   /**
    *
    */
-  val entitiesById: Map<String, Entity>
-  /**
-   *
-   */
-  val entitiesByName: Map<String, Entity>
+  val entities: Map<String, Entity>
   /**
    * the world this manager is for
    */
@@ -22,10 +18,6 @@ interface EntityManager {
    */
   fun getById(id: String): Entity
   /**
-   * gets an [Entity] by name
-   */
-  fun getByName(name: String): Entity
-  /**
    *
    */
   fun forEach(block: (entity: Entity) -> Unit)
@@ -34,12 +26,11 @@ interface EntityManager {
    *
    * this will cause an [OnEntityCreated] event.
    */
-  fun create(name: String = "", decorator: Entity.() -> Unit): Entity
+  fun create(decorator: Entity.() -> Unit): Entity
   /**
    * this is called when an entity is created externally from the world.
    *
    * @see World.receiveEntity
-   * @see
    */
   fun add(entity: Entity)
   /**
@@ -48,12 +39,6 @@ interface EntityManager {
    * this will cause an [OnEntityDeleted] event.
    */
   fun delete(entity: Entity)
-  /**
-   * delete the entity with the given name.
-   *
-   * this will cause an [OnEntityDeleted] event.
-   */
-  fun deleteByName(name: String)
   /**
    * delete the entity with the given id.
    *
